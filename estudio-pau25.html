@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PAU +25 · UV · Motor cognitivo</title>
+<style>
+:root{
+ --bg:#0a0e13;--bg2:#11161d;--bg3:#1a2129;--bg4:#232c37;--line:#2a3340;
+ --txt:#e8eef5;--mut:#7d8a9c;--dim:#5a6678;
+ --acc:#5eead4;--acc2:#38bdf8;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--hi:#fbbf24;
+ --p1:#a78bfa;--p2:#f472b6;--p3:#fb923c;--p4:#34d399;--p5:#60a5fa;--p6:#f87171;
+ --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;font-size:14.5px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sb{background:var(--bg2);border-right:1px solid var(--line);padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb h1{font-size:16px;padding:0 22px 4px;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.sb h1::before{content:"";width:8px;height:8px;background:var(--acc);border-radius:50%;box-shadow:0 0 12px var(--acc)}
+.sb .sub{color:var(--mut);font-size:11.5px;padding:0 22px 16px;border-bottom:1px solid var(--line)}
+.nav{padding:10px 0}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 22px;color:var(--mut);text-decoration:none;font-size:13.5px;border-left:3px solid transparent;transition:.12s;cursor:pointer}
+.nav a:hover{background:var(--bg3);color:var(--txt)}
+.nav a.active{background:var(--bg3);color:var(--txt);border-left-color:var(--acc)}
+.nav .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nav .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);padding:16px 22px 4px;font-weight:600}
+.sb-foot{padding:14px 22px;border-top:1px solid var(--line);margin-top:8px;font-size:11px;color:var(--mut);line-height:1.6}
+.sb-foot strong{color:var(--hi)}
+.main{padding:28px 40px 80px;max-width:1100px}
+.page{display:none;animation:fade .25s}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-size:24px;margin-bottom:4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h2 .badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;background:var(--bg3);color:var(--mut)}
+.lead{color:var(--mut);margin-bottom:22px;font-size:14px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:14px;transition:.15s}
+.card h3{font-size:16px;margin-bottom:10px;color:var(--acc)}
+.card h4{font-size:14px;margin:14px 0 7px;color:var(--hi)}
+.card p{margin-bottom:8px;color:#cbd5e1;font-size:14px}
+.card ul,.card ol{margin:6px 0 10px 22px;color:#cbd5e1;font-size:14px}
+.card li{margin-bottom:5px}
+.card strong{color:var(--txt)}
+.ex{background:var(--bg3);border-left:3px solid var(--acc2);padding:12px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+.ex .lbl{display:inline-block;background:var(--acc2);color:#0a1520;font-weight:700;padding:2px 7px;border-radius:4px;font-size:10.5px;margin-bottom:5px;letter-spacing:.5px}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+.tbl th,.tbl td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{background:var(--bg3);color:var(--acc);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.kbd{font-family:'SF Mono',Monaco,monospace;background:var(--bg3);padding:1px 6px;border-radius:4px;font-size:12.5px;color:var(--hi)}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;letter-spacing:.3px}
+.t-high{background:#5b1414;color:#fca5a5}.t-mid{background:#5a4214;color:#fcd34d}.t-low{background:#143d5b;color:#93c5fd}.t-ok{background:#143d2d;color:#86efac}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}
+.metric{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.metric::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--metric-c,var(--acc))}
+.metric .lab{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-weight:600}
+.metric .val{font-size:28px;font-weight:700;color:var(--metric-c,var(--acc));line-height:1}
+.metric .sub{color:var(--mut);font-size:11.5px;margin-top:6px}
+.metric.danger{--metric-c:var(--err)}.metric.warn{--metric-c:var(--warn)}.metric.ok{--metric-c:var(--ok)}.metric.info{--metric-c:var(--acc2)}
+.welcome{background:linear-gradient(135deg,rgba(94,234,212,.07),rgba(167,139,250,.04));border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:20px}
+.welcome h2{margin-bottom:6px}.welcome p{color:#cbd5e1;font-size:14px}
+.bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar > div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .5s}
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.subj-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;transition:.18s}
+.subj-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:var(--shadow)}
+.subj-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.subj-card .head h3{font-size:14.5px}
+.subj-card .meta{color:var(--mut);font-size:12px;margin-bottom:8px}
+.subj-card .nums{display:flex;gap:14px;font-size:11.5px;color:var(--mut);margin-top:8px}
+.subj-card .nums b{color:var(--txt);font-weight:600;font-size:13px;display:block}
+.ch-wrap{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:18px}
+.ch-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.ch-meta .info{font-size:12px;color:var(--mut)}
+.ch-meta .info b{color:var(--acc);font-size:13px}
+.timer{font-family:'SF Mono',Monaco,monospace;font-size:18px;color:var(--hi);background:var(--bg3);padding:4px 12px;border-radius:6px}
+.timer.danger{color:var(--err);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.ch-q{font-size:17px;line-height:1.6;margin-bottom:18px;color:var(--txt);padding:12px 0}
+.ch-q em{color:var(--hi);font-style:normal;background:rgba(251,191,36,.12);padding:0 4px;border-radius:3px}
+.ch-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.ch-opt{padding:13px 16px;background:var(--bg3);border:1px solid transparent;border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;display:flex;align-items:center;gap:10px}
+.ch-opt:hover{border-color:var(--acc2);background:var(--bg4)}
+.ch-opt.sel{border-color:var(--acc);background:rgba(94,234,212,.08)}
+.ch-opt.correct{border-color:var(--ok);background:rgba(34,197,94,.12)}
+.ch-opt.wrong{border-color:var(--err);background:rgba(239,68,68,.12)}
+.ch-opt .k{background:var(--bg);color:var(--mut);width:24px;height:24px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-family:monospace;font-size:11px;flex-shrink:0}
+.expl{margin-top:12px;padding:12px 14px;background:rgba(56,189,248,.08);border-left:3px solid var(--acc2);border-radius:6px;font-size:13px;color:#cbd5e1;display:none}
+.expl.show{display:block}
+.expl strong{color:var(--acc2)}
+.qual{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.qual button{flex:1;min-width:80px;padding:11px;border:1px solid var(--line);background:var(--bg3);color:var(--txt);border-radius:8px;cursor:pointer;font-family:inherit;font-size:12.5px;transition:.12s;font-weight:600}
+.qual button:hover{transform:translateY(-1px)}
+.qual button[data-q="2"]{border-color:var(--err);color:#fca5a5}
+.qual button[data-q="3"]{border-color:var(--warn);color:#fcd34d}
+.qual button[data-q="5"]{border-color:var(--ok);color:#86efac}
+.qual button .desc{display:block;font-size:10.5px;color:var(--mut);margin-top:3px;font-weight:400}
+.btn{background:var(--acc);color:#0a1520;border:none;padding:10px 20px;border-radius:7px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.12s}
+.btn:hover{background:#7af3dc;transform:translateY(-1px)}
+.btn.sec{background:var(--bg3);color:var(--txt);border:1px solid var(--line)}
+.btn.sec:hover{background:var(--bg4)}
+.btn.err{background:var(--err);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.lg{padding:12px 24px;font-size:14.5px}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.alert{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:13.5px;line-height:1.55}
+.alert.info{background:rgba(56,189,248,.1);border:1px solid var(--acc2);color:#7dd3fc}
+.alert.ok{background:rgba(34,197,94,.1);border:1px solid var(--ok);color:#86efac}
+.topic-list{display:grid;gap:8px;margin:14px 0}
+.topic{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;transition:.15s}
+.topic.locked{opacity:.5}
+.topic:not(.locked){cursor:pointer}
+.topic:not(.locked):hover{border-color:var(--acc);background:var(--bg3)}
+.topic .left{flex:1;min-width:0}
+.topic .ttl{font-weight:600;font-size:14px;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.topic .meta{font-size:11.5px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap}
+.topic .right{display:flex;align-items:center;gap:12px}
+.topic .mast{font-size:18px;font-weight:700}
+.topic .mast.m-low{color:var(--err)}
+.topic .mast.m-mid{color:var(--warn)}
+.topic .mast.m-high{color:var(--ok)}
+.mini-bar{width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.mini-bar > div{height:100%;transition:width .4s}
+.sync-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:780px){.sync-wrap{grid-template-columns:1fr}}
+.sync-box{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:18px}
+.sync-box h3{margin-bottom:8px;font-size:15px;color:var(--acc)}
+.sync-box p{font-size:13px;color:var(--mut);margin-bottom:12px}
+textarea.sync-ta{width:100%;min-height:180px;background:var(--bg3);border:1px solid var(--line);color:var(--txt);padding:12px;border-radius:7px;font-family:'SF Mono',Monaco,monospace;font-size:12px;resize:vertical;line-height:1.5}
+textarea.sync-ta:focus{outline:none;border-color:var(--acc)}
+.sync-log{background:var(--bg3);border:1px solid var(--line);border-radius:7px;padding:10px 14px;margin-top:10px;max-height:160px;overflow-y:auto;font-family:'SF Mono',Monaco,monospace;font-size:11.5px;color:var(--mut)}
+.sync-log .ln{padding:3px 0;border-bottom:1px solid var(--line)}
+.sync-log .ln:last-child{border:0}
+.sync-log .ok{color:var(--ok)}.sync-log .err{color:var(--err)}.sync-log .info{color:var(--acc2)}
+.today-queue{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px}
+.today-queue .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.today-queue h3{font-size:16px;color:var(--acc)}
+.queue-stats{display:flex;gap:18px;font-size:12px;color:var(--mut)}
+.queue-stats b{color:var(--txt);font-size:14px;display:block}
+.q-empty{text-align:center;padding:40px 20px;color:var(--mut)}
+.q-empty .big{font-size:36px;margin-bottom:10px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+.dim{color:var(--mut)}
+.center{text-align:center}
+@media(max-width:880px){.app{grid-template-columns:1fr}.sb{position:relative;height:auto}.main{padding:20px}}
+.examenes-list{display:flex;flex-direction:column;gap:8px}
+.exam-row{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:var(--bg2);border:1px solid var(--line);border-radius:8px}
+.exam-row .info .ttl{font-weight:600;margin-bottom:2px;font-size:14px}
+.exam-row .info .sub{color:var(--mut);font-size:12.5px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--ok);color:var(--ok);padding:12px 18px;border-radius:8px;font-size:13px;box-shadow:var(--shadow);z-index:1000;animation:slideup .3s;display:none}
+.toast.show{display:block}.toast.err{border-color:var(--err);color:#fca5a5}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sb">
+    <h1>PAU +25 · UV</h1>
+    <div class="sub">Motor cognitivo · Modo desafío activo</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sb-foot">
+      Fase General · <strong>abril 2027</strong><br>
+      Fase Específica · <strong>mayo 2027</strong><br>
+      Inscripción · <strong>feb. 2027</strong> · 78,20€<br>
+      <span id="daysLeft" style="color:var(--hi)"></span>
+    </div>
+  </aside>
+  <main class="main">
+
+    <section class="page" id="hoy">
+      <h2>Práctica del día <span class="badge" id="hoyBadge">—</span></h2>
+      <p class="lead">Cola de repetición espaciada (SM-2). Estas son las cards que toca repasar hoy para mantener la curva del olvido bajo control.</p>
+      <div class="today-queue">
+        <div class="head">
+          <h3 id="hoyTitle">Tu sesión inteligente</h3>
+          <div class="queue-stats">
+            <div><b id="dueCount">0</b><span>pendientes</span></div>
+            <div><b id="newCount">0</b><span>nuevas</span></div>
+            <div><b id="todayDone">0</b><span>hechas hoy</span></div>
+          </div>
+        </div>
+        <div id="hoyContent"></div>
+      </div>
+      <div class="card">
+        <h3>Cómo funciona el sistema</h3>
+        <ul>
+          <li><strong>Cada pregunta tiene fecha de vencimiento</strong> calculada por SM-2 según tu rendimiento previo.</li>
+          <li><strong>Si fallas o tardas</strong>, vuelve en 1 día. Si la dominas, los intervalos crecen: 1 → 6 → 15 → 40 → 90+ días.</li>
+          <li><strong>Después de cada respuesta</strong>, eliges tú: <em>Difícil / Bien / Fácil</em>. Esto ajusta la curva del olvido para esa card.</li>
+          <li><strong>Los temas avanzados se bloquean</strong> hasta que los conceptos base llegan al 80% de dominio.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="page" id="dashboard">
+      <div class="welcome">
+        <h2>Hola Nelson <span class="badge" id="streakBadge">Racha 0 días</span></h2>
+        <p>Tu rendimiento real basado en el algoritmo de repetición espaciada y la curva del olvido. No son barras decorativas: es tu probabilidad real de aprobar en abril 2027.</p>
+      </div>
+      <div class="metrics">
+        <div class="metric ok"><div class="lab">% Retención estimada</div><div class="val" id="mRet">—</div><div class="sub">Memoria efectiva ahora mismo</div></div>
+        <div class="metric info"><div class="lab">Probabilidad aprobado</div><div class="val" id="mProb">—</div><div class="sub">Vs umbral PAU UV (5/10)</div></div>
+        <div class="metric warn"><div class="lab">Costo procrastinación</div><div class="val" id="mProc">—</div><div class="sub">Días de retraso al ritmo actual</div></div>
+        <div class="metric"><div class="lab">Cards dominadas</div><div class="val" id="mMast">0</div><div class="sub">Intervalo ≥ 21 días</div></div>
+      </div>
+      <h3 style="margin:18px 0 12px;color:var(--mut);font-size:12px;letter-spacing:.6px;text-transform:uppercase">Tus 6 asignaturas</h3>
+      <div class="subj-grid" id="subjGrid"></div>
+    </section>
+
+    <section class="page" id="cast"></section>
+    <section class="page" id="val"></section>
+    <section class="page" id="com"></section>
+    <section class="page" id="ing"></section>
+    <section class="page" id="hist"></section>
+    <section class="page" id="fil"></section>
+
+    <section class="page" id="examenes">
+      <h2>Exámenes simulados cronometrados</h2>
+      <p class="lead">Pruebas con el tiempo real del examen. Al entregar ves tu nota sobre 10 y la corrección comentada.</p>
+      <div class="examenes-list" id="examList"></div>
+      <div id="examRunner" style="display:none;margin-top:18px"></div>
+    </section>
+
+    <section class="page" id="sync">
+      <h2>Sincronización manual con Claude</h2>
+      <p class="lead">Exporta tu estado para que Claude lo analice; pega sus instrucciones para que el sistema reajuste tu ruta de estudio.</p>
+      <div class="sync-wrap">
+        <div class="sync-box">
+          <h3>📤 Exportar Snapshot</h3>
+          <p>Genera un JSON compacto con tus resultados, tiempos y estado SRS. Cópialo y pégamelo en el chat para que analice puntos débiles.</p>
+          <textarea class="sync-ta" id="snapOut" readonly placeholder="Pulsa 'Generar snapshot' para crear el JSON…"></textarea>
+          <div class="actions">
+            <button class="btn" onclick="genSnapshot()">Generar snapshot</button>
+            <button class="btn sec" onclick="copySnapshot()">Copiar</button>
+            <button class="btn sec" onclick="downloadSnapshot()">Descargar .json</button>
+          </div>
+        </div>
+        <div class="sync-box">
+          <h3>📥 Inyectar Instrucciones</h3>
+          <p>Pega aquí las instrucciones JSON que te devuelva Claude. Se aplicarán al motor: desbloquear temas, ajustar prioridades, etc.</p>
+          <textarea class="sync-ta" id="injIn" placeholder='Ejemplos:&#10;{"unlock":["hist.t2","hist.t5"]}&#10;{"priority":{"val.t4":"high"}}&#10;{"resetMastery":["cast.t6"]}&#10;{"setExamDate":"2027-04-28"}&#10;{"note":"Foco en pronoms febles esta semana"}'></textarea>
+          <div class="actions">
+            <button class="btn" onclick="injectInstructions()">Aplicar instrucciones</button>
+            <button class="btn sec" onclick="document.getElementById('injIn').value=''">Limpiar</button>
+            <button class="btn sec" onclick="document.getElementById('fileImport').click()">📁 Importar snapshot (.json)</button>
+            <input type="file" id="fileImport" accept=".json,application/json" style="display:none" onchange="importSnapshotFile(event)">
+          </div>
+          <div class="sync-log" id="syncLog"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Formato de instrucciones reconocido</h3>
+        <table class="tbl">
+          <tr><th>Clave</th><th>Tipo</th><th>Efecto</th></tr>
+          <tr><td><span class="kbd">unlock</span></td><td>array de IDs</td><td>Desbloquea temas avanzados (ignora el 80%)</td></tr>
+          <tr><td><span class="kbd">lock</span></td><td>array de IDs</td><td>Bloquea para forzar refuerzo</td></tr>
+          <tr><td><span class="kbd">priority</span></td><td>{topicId:"high"/"normal"/"low"}</td><td>Prioridad en la cola de hoy</td></tr>
+          <tr><td><span class="kbd">resetMastery</span></td><td>array</td><td>Resetea dominio del tema</td></tr>
+          <tr><td><span class="kbd">boost</span></td><td>array de cardIds</td><td>Adelanta esas cards a hoy</td></tr>
+          <tr><td><span class="kbd">setExamDate</span></td><td>YYYY-MM-DD</td><td>Cambia la fecha de examen</td></tr>
+          <tr><td><span class="kbd">note</span></td><td>string</td><td>Guarda una nota personalizada</td></tr>
+          <tr><td><span class="kbd">load</span></td><td>objeto</td><td>Restaura un snapshot completo</td></tr>
+        </table>
+        <h4>Notas activas de Claude</h4>
+        <div id="notesArea" class="dim" style="font-size:13px">— Sin notas todavía.</div>
+        <hr class="sep">
+        <h4>Datos guardados localmente</h4>
+        <div class="actions">
+          <button class="btn sec" onclick="exportFile()">Backup completo (.json)</button>
+          <button class="btn err" onclick="resetAll()">Borrar todo el progreso</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="plan">
+      <h2>Plan de 12 meses <span class="badge">Junio 2026 — Abril 2027</span></h2>
+      <div class="card">
+        <h3>FASE 1 · Cimientos (jun–ago 2026)</h3>
+        <ul>
+          <li>Historia: leer Temas 1 y 4 como novela.</li>
+          <li>Filosofía: primera lectura de Fedón y Ortega.</li>
+          <li>Comentario: un artículo de opinión al día.</li>
+          <li>Inglés: 20 min/día gramática + BBC Learning English.</li>
+          <li>Castellano: 20 errores frecuentes en SRS.</li>
+          <li>Valencià: 30 castellanismes en SRS.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>FASE 2 · Profundización (sept–dic 2026)</h3>
+        <table class="tbl">
+          <tr><th>Mes</th><th>Foco</th></tr>
+          <tr><td>Sept</td><td>Historia T1 · Platón · Sintaxis castellana</td></tr>
+          <tr><td>Oct</td><td>Historia T2 (alto riesgo) · Tomás · 1 comentario/sem</td></tr>
+          <tr><td>Nov</td><td>Historia T5 (alto riesgo) · Russell · Pronoms febles</td></tr>
+          <tr><td>Dic</td><td>Repaso T3/T6/T7 · 1er simulacro Filosofía 75min</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>FASE 3 · Simulacros (ene–mar 2027)</h3>
+        <ul>
+          <li>Lun-Mar: simulacro Fase General</li>
+          <li>Mié-Jue: Historia o Filosofía (3-4 folios cronometrados a mano)</li>
+          <li>Sábado: bloque largo de 2 asignaturas seguidas</li>
+          <li>Domingo: corrección detallada + refuerzo</li>
+        </ul>
+        <p><strong>Meta:</strong> 3 simulacros completos por asignatura antes de abril.</p>
+      </div>
+      <div class="card">
+        <h3>FASE 4 · Afinado (abril 2027)</h3>
+        <ul>
+          <li>Solo repasar SRS y esquemas. CERO temario nuevo.</li>
+          <li>Un simulacro por semana máximo.</li>
+          <li>8h sueño, alimentación, algo de ejercicio.</li>
+          <li>Última semana: 1h repaso ligero y descansar.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================ STATE ============================================================ */
+const STORE = 'pau25_engine_v2';
+const DEFAULT_EXAM = '2027-04-25';
+const defaultState = () => ({
+  v: 2, startedAt: Date.now(), examDate: DEFAULT_EXAM,
+  cards: {}, topics: {}, unlocks: [], locks: [], notes: [], log: [], sessions: [],
+  streak: { days: 0, last: null }
+});
+let state = JSON.parse(localStorage.getItem(STORE) || 'null') || defaultState();
+function save(){ localStorage.setItem(STORE, JSON.stringify(state)); }
+
+(function(){
+  const today = new Date().toDateString();
+  if(state.streak.last !== today){
+    if(!state.streak.last){ state.streak.days = 1; }
+    else {
+      const diff = (new Date(today) - new Date(state.streak.last))/86400000;
+      state.streak.days = diff === 1 ? state.streak.days + 1 : 1;
+    }
+    state.streak.last = today; save();
+  }
+})();
+
+/* ============================================================ CONTENT ============================================================ */
+const SUBJECTS = [
+  { id:'cast', name:'Lengua Castellana', icon:'📘', color:'var(--p1)', risk:'10pts · 10 preguntas fijas' },
+  { id:'val',  name:'Llengua Valenciana', icon:'📕', color:'var(--p2)', risk:'10pts · redacció val. doble' },
+  { id:'com',  name:'Comentario de Texto', icon:'📝', color:'var(--p3)', risk:'10pts · 75min · 5 preguntas' },
+  { id:'ing',  name:'Inglés', icon:'🌐', color:'var(--p4)', risk:'10pts · 5 preguntas fijas' },
+  { id:'hist', name:'Historia', icon:'🏛', color:'var(--p5)', risk:'10pts · 3-4 folios a mano' },
+  { id:'fil',  name:'Filosofía', icon:'🧠', color:'var(--p6)', risk:'10pts · 75min · 5 autores UV' }
+];
+
+const TOPICS = {
+  cast: [
+    { id:'cast.t1', name:'Ortografía y tildes', level:'foundation', tag:'FIX' },
+    { id:'cast.t2', name:'Morfología nominal', level:'foundation', tag:'FIX' },
+    { id:'cast.t3', name:'Verbos y perífrasis', level:'foundation', tag:'FIX' },
+    { id:'cast.t4', name:'Sintaxis (funciones)', level:'advanced', tag:'CLAVE' },
+    { id:'cast.t5', name:'Tipos de oración', level:'advanced', tag:'FIX' },
+    { id:'cast.t6', name:'Léxico y semántica', level:'advanced', tag:'FIX' }
+  ],
+  val: [
+    { id:'val.t1', name:'Ortografia i dígrafs', level:'foundation', tag:'FIX' },
+    { id:'val.t2', name:'Accentuació i apòstrof', level:'foundation', tag:'FIX' },
+    { id:'val.t3', name:'Castellanismes', level:'foundation', tag:'CLAVE' },
+    { id:'val.t4', name:'Pronoms febles', level:'advanced', tag:'CLAVE' },
+    { id:'val.t5', name:'Verbs irregulars', level:'advanced', tag:'CLAVE' },
+    { id:'val.t6', name:"Redacció d'opinió", level:'advanced', tag:'×2 pts' }
+  ],
+  com: [
+    { id:'com.t1', name:'Estructura y método', level:'foundation', tag:'FIX' },
+    { id:'com.t2', name:'Tipos de estructura', level:'foundation', tag:'FIX' },
+    { id:'com.t3', name:'Léxico y antónimos', level:'foundation', tag:'FIX' },
+    { id:'com.t4', name:'Análisis (3a)', level:'advanced', tag:'2,5pts' },
+    { id:'com.t5', name:'Valoración (3b)', level:'advanced', tag:'1,5pts' }
+  ],
+  ing: [
+    { id:'ing.t1', name:'Tenses (basics)', level:'foundation', tag:'FIX' },
+    { id:'ing.t2', name:'Modal verbs', level:'foundation', tag:'FIX' },
+    { id:'ing.t3', name:'False friends', level:'foundation', tag:'FIX' },
+    { id:'ing.t4', name:'Conditionals', level:'advanced', tag:'CLAVE' },
+    { id:'ing.t5', name:'Connectors (writing)', level:'advanced', tag:'CLAVE' },
+    { id:'ing.t6', name:'Vocabulary (5 temas)', level:'advanced', tag:'FIX' }
+  ],
+  hist: [
+    { id:'hist.t1', name:'T1 · Revoluciones burguesas', level:'foundation', tag:'GARANTIZADO' },
+    { id:'hist.t4', name:'T4 · Gran Guerra', level:'foundation', tag:'PROBABLE' },
+    { id:'hist.t2', name:'T2 · Revolución Industrial', level:'advanced', tag:'ALTO RIESGO' },
+    { id:'hist.t3', name:'T3 · Colonialismo', level:'advanced', tag:'ALTO RIESGO' },
+    { id:'hist.t5', name:'T5 · IIGM y Guerra Fría', level:'advanced', tag:'ALTO RIESGO' },
+    { id:'hist.t67', name:'T6-7 · Descolonización y globalización', level:'advanced', tag:'MEDIO' }
+  ],
+  fil: [
+    { id:'fil.platon', name:'Platón · Fedón', level:'foundation', tag:'MUY PROBABLE' },
+    { id:'fil.ortega', name:'Ortega · ¿Qué es filosofía?', level:'foundation', tag:'GARANTIZADO' },
+    { id:'fil.tomas', name:'Tomás · Summa contra gentiles', level:'advanced', tag:'ALTO RIESGO' },
+    { id:'fil.descartes', name:'Descartes · Discurso del método', level:'advanced', tag:'POSIBLE' },
+    { id:'fil.russell', name:'Russell · Ensayos filosóficos', level:'advanced', tag:'ALTO RIESGO' }
+  ]
+};
+
+const CARDS = {
+  'cast.t1': [
+    { q:'¿Qué tilde diacrítica falta? "No __ qué decirle"', o:['se','sé','sé o se'], a:1, e:'<em>Sé</em> con tilde = verbo saber.' },
+    { q:'Corrige: "haver si vienes"', o:['Mantenerlo','a ver si vienes','a haber si vienes'], a:1, e:'"A ver" del verbo ver.' },
+    { q:'¿Cuál lleva tilde correctamente?', o:['baul','baúl','baúl no, es hiato'], a:1, e:'Hiato con vocal cerrada tónica → tilde.' },
+    { q:'Adverbio en -mente correcto:', o:['rapidamente','rápidamente','rápidamenté'], a:1, e:'Conserva la tilde del adjetivo original.' },
+    { q:'¿Cuál es correcto?', o:['él sabia','él sabía','el sabía'], a:1, e:'Pronombre él + sabía (hiato).' },
+    { q:'"echo de menos" — ¿error?', o:['No hay error','sí, va con h','sí, va con c'], a:0, e:'"Echo de menos" (verbo echar) es correcto.' }
+  ],
+  'cast.t2': [
+    { q:'Plural correcto de "escáner"', o:['escánere','escáneres','escaners'], a:1, e:'Esdrújula en -es.' },
+    { q:'Forma correcta:', o:['el agua fría','la agua fría','el aguafría'], a:0, e:'Femeninos con a- tónica: artículo masculino + adjetivo femenino.' },
+    { q:'Femenino de "héroe":', o:['heroína','herona','heroe'], a:0, e:'Femenino irregular.' },
+    { q:'Plural de "tabú":', o:['tabús','tabúes','ambas correctas'], a:2, e:'Se admiten ambas.' },
+    { q:'Comparativo correcto:', o:['más mejor','mejor','el más mejor'], a:1, e:'Bueno → mejor (irregular).' },
+    { q:'"esa casa" → tipo de determinante:', o:['Posesivo','Demostrativo','Indefinido'], a:1, e:'Demostrativo.' }
+  ],
+  'cast.t3': [
+    { q:'Perífrasis de suposición:', o:['Debes estudiar','Debe de ser tarde','Tengo que ir'], a:1, e:'Deber DE = suposición.' },
+    { q:'Pretérito perfecto simple de "andar":', o:['anduvo','andó','anduvió'], a:0, e:'Verbo irregular: anduvo.' },
+    { q:'Subjuntivo imperfecto de "ser" (yo):', o:['fuera','sería','sea'], a:0, e:'Fuera/fuese.' },
+    { q:'Imperativo de "ir" (tú):', o:['ves','ve','vete'], a:1, e:'2ª persona: ve.' },
+    { q:'Imperativo reflexivo correcto:', o:['acordaros','acordaos','os acordáis'], a:1, e:'Pierde la -d.' },
+    { q:'Perífrasis de inicio brusco:', o:['va a llorar','rompió a llorar','llora siempre'], a:1, e:'Romper a + inf.' }
+  ],
+  'cast.t4': [
+    { q:'Función de "un libro" en "Compré un libro":', o:['CI','CD','CC'], a:1, e:'Sustituible por lo: CD.' },
+    { q:'Función de "a Juan" en "Le di un regalo a Juan":', o:['CD','CI','CC'], a:1, e:'Sustituible por le: CI.' },
+    { q:'¿Cuál es correcta?', o:['A mis hijas les quiero','A mis hijas las quiero','A mis hijas la quiero'], a:1, e:'CD → las. "Les" sería laísmo.' },
+    { q:'Función de "alta" en "Es alta":', o:['CD','Atributo','Predicativo'], a:1, e:'Verbo copulativo + adj. = Atributo.' },
+    { q:'Identifica el C. Régimen:', o:['Confío en ti','Vi a Juan','Salí ayer'], a:0, e:'Preposición exigida.' },
+    { q:'Función de "por Cervantes" en "Fue escrito por Cervantes":', o:['CC','C. agente','CD'], a:1, e:'Pasiva + por = C. Agente.' }
+  ],
+  'cast.t5': [
+    { q:'"¡Qué frío hace!" es:', o:['Enunciativa','Exclamativa','Desiderativa'], a:1, e:'Emoción con marca exclamativa.' },
+    { q:'"Quizá llueva" es:', o:['Desiderativa','Dubitativa','Imperativa'], a:1, e:'Duda.' },
+    { q:'"Ojalá venga" es:', o:['Desiderativa','Dubitativa','Enunciativa'], a:0, e:'Subjuntivo + ojalá = deseo.' },
+    { q:'"Llueve mucho" estructuralmente es:', o:['Pasiva','Impersonal','Copulativa'], a:1, e:'Sin sujeto léxico.' },
+    { q:'"Me peino" es:', o:['Recíproca','Reflexiva','Impersonal'], a:1, e:'Acción sobre el propio sujeto.' },
+    { q:'"El libro fue leído" es:', o:['Activa','Pasiva','Copulativa'], a:1, e:'Sujeto paciente + ser + part.' }
+  ],
+  'cast.t6': [
+    { q:'Antónimo de "contundente" (argumento contundente):', o:['Débil','Ambiguo','Hueco'], a:1, e:'Contundente = firme. Antónimo: ambiguo.' },
+    { q:'Hipónimo de "mueble":', o:['Objeto','Silla','Casa'], a:1, e:'Hipónimo = más específico.' },
+    { q:'Sufijo de "periodista":', o:['-ista, oficio','-ista, lugar','-ta, origen'], a:0, e:'-ista forma nombres de oficio.' },
+    { q:'Prefijo de "subterráneo":', o:['sub-, después','sub-, bajo','sub-, contra'], a:1, e:'Sub- = bajo, debajo.' },
+    { q:'"banco" (asiento) / "banco" (entidad):', o:['Sinonimia','Polisemia','Homonimia'], a:1, e:'Polisemia: una palabra, varios sentidos.' },
+    { q:'Antónimo de "honesto":', o:['Sensato','Deshonesto','Tranquilo'], a:1, e:'Negación con des-.' }
+  ],
+  'val.t1': [
+    { q:'¿Quin dígraf és la "l geminada"?', o:['ll','l·l','ll·l'], a:1, e:'L·l: il·lusió.' },
+    { q:'Escriu: "ca___"', o:['cavall','caball','cabal'], a:0, e:'Cavall, amb v.' },
+    { q:'Forma correcta:', o:['caxa','caixa','caja'], a:1, e:'Dígraf ix: caixa.' },
+    { q:'So africat sonor davant a/o/u:', o:['tg','tj','tx'], a:1, e:'Tj: pluja.' },
+    { q:'"any" so:', o:['Velar','Palatal nasal','Bilabial'], a:1, e:'Ny = palatal nasal.' }
+  ],
+  'val.t2': [
+    { q:'Quina porta accent obert (greu)?', o:['també','camí','però'], a:2, e:'E oberta → è.' },
+    { q:'Apòstrof correcte:', o:['la història','l\'història','la-història'], a:0, e:'Davant i àtona no s\'apostrofa.' },
+    { q:'Diéresi correcta:', o:['llengues','llengües','llengúes'], a:1, e:'Per marcar que u sona.' },
+    { q:'"camí" → tipus d\'accent:', o:['agut','greu','cap'], a:0, e:'I tancada → agut.' },
+    { q:'Guionet en pronoms enclítics:', o:['dona m la','dona\'m-la','dona\'mla'], a:1, e:'Guionet quan cal.' }
+  ],
+  'val.t3': [
+    { q:'Forma valenciana de "gafas":', o:['gafes','ulleres','ulles'], a:1, e:'Ulleres.' },
+    { q:'Forma de "tinc que":', o:['tinc de','he de','tinc a'], a:1, e:'He de / haig de.' },
+    { q:'Forma de "inclús":', o:['inclós','fins i tot','tot i així'], a:1, e:'Fins i tot.' },
+    { q:'Forma de "aconteiximent":', o:['esdeveniment','aconteixement','acontiximent'], a:0, e:'Esdeveniment.' },
+    { q:'Forma de "a on":', o:['a-on','on','ahon'], a:1, e:'On.' },
+    { q:'Forma de "rato":', o:['rato','moment','estona'], a:2, e:'Estona / moment.' },
+    { q:'Forma de "contenedors":', o:['contenedors','contenidors','contenedores'], a:1, e:'Contenidors.' },
+    { q:'Forma de "puesto":', o:['puesto','lloc','plaça'], a:1, e:'Lloc.' }
+  ],
+  'val.t4': [
+    { q:'CI + CD m.s.: "li + el" =', o:['li la','li\'l','el li'], a:1, e:'Li\'l (CI davant CD).' },
+    { q:'"De llibres, tinc tres" → quin pronom?', o:['els','hi','en'], a:2, e:'En = partitiu.' },
+    { q:'"Vaig a Madrid" → "____ vaig"', o:['hi','en','el'], a:0, e:'Hi = complement de lloc.' },
+    { q:'Combinació "li + ho":', o:['li ho','l\'ho','liho'], a:0, e:'Li ho.' },
+    { q:'"en + hi":', o:['enhi','n\'hi','en hi'], a:1, e:'N\'hi.' },
+    { q:'Imperatiu + CD f.s.: "agafar la"', o:['agafa-la','agafala','agafa\'la'], a:0, e:'Agafa-la.' }
+  ],
+  'val.t5': [
+    { q:'Pres. ind. 1a sg. "anar":', o:['ane','vaig','vac'], a:1, e:'Jo vaig.' },
+    { q:'1a sg. "eixir":', o:['ixc','isc','eix'], a:1, e:'Jo isc.' },
+    { q:'1a sg. "fer":', o:['faig','fac','faç'], a:0, e:'Jo faig.' },
+    { q:'Pres. subj. 3a sg. "ser":', o:['siga','sigui','sea'], a:0, e:'Siga.' },
+    { q:'1a sg. "saber":', o:['sé','sap','sap jo'], a:0, e:'Jo sé.' },
+    { q:'1a sg. "voler":', o:['vol','vull','volc'], a:1, e:'Jo vull.' }
+  ],
+  'val.t6': [
+    { q:'Connector de contrast:', o:['per tant','tanmateix','a més a més'], a:1, e:'Tanmateix.' },
+    { q:'Connector additiu:', o:['no obstant','així doncs','a més a més'], a:2, e:'A més a més.' },
+    { q:'Connector de conclusió:', o:['en definitiva','en canvi','tanmateix'], a:0, e:'En definitiva.' },
+    { q:'Introducir opinió:', o:['considere que','potser','massa'], a:0, e:'Al meu parer, considere que…' },
+    { q:'Estructura ideal de la redacció:', o:['Tesi-Args-Conclusió','Anècdota lliure','Llistat'], a:0, e:'Tesi → 2 arguments → conclusió.' }
+  ],
+  'com.t1': [
+    { q:'¿Cuánto dura el examen?', o:['60','75','90'], a:1, e:'75 minutos.' },
+    { q:'¿Idioma de respuesta?', o:['Solo cast.','Solo val.','Cast. o val.'], a:2, e:'Elige el que mejor domines.' },
+    { q:'El texto siempre es:', o:['Una novela','Un artículo de opinión','Un poema'], a:1, e:'~40 líneas.' },
+    { q:'Orden óptimo:', o:['1,2,3a,3b,4','4,1,2,3a,3b','3a,3b,1,2,4'], a:1, e:'Empezar por la 4 (tema).' },
+    { q:'Criterio principal:', o:['Memorizar datos','Madurez argumental','Léxico técnico'], a:1, e:'Razonar como adulto.' }
+  ],
+  'com.t2': [
+    { q:'Tesis al final tras argumentos:', o:['Deductiva','Inductiva','Encuadrada'], a:1, e:'Inductiva.' },
+    { q:'Tesis al principio y al final:', o:['Deductiva','Inductiva','Encuadrada'], a:2, e:'Encuadrada.' },
+    { q:'Tesis al principio:', o:['Deductiva','Inductiva','Encuadrada'], a:0, e:'Deductiva.' },
+    { q:'Ideas en paralelo:', o:['Paralela','Inductiva','Encuadrada'], a:0, e:'Paralela.' }
+  ],
+  'com.t3': [
+    { q:'El antónimo debe ser:', o:['De cualquier categoría','De misma categoría','Solo verbos'], a:1, e:'Misma categoría y registro.' },
+    { q:'"contundente" en "discurso contundente":', o:['Adverbio','Adjetivo','Sustantivo'], a:1, e:'Adjetivo.' },
+    { q:'Antónimo de "sofisticado":', o:['Lujoso','Tosco','Caro'], a:1, e:'Refinamiento → antónimo: tosco.' },
+    { q:'Si la palabra tiene varios sentidos:', o:['Más común','Del sentido del texto','Cualquiera'], a:1, e:'Del sentido en el texto.' }
+  ],
+  'com.t4': [
+    { q:'En 3a debes identificar:', o:['Solo el tema','Tesis, estructura, ideas','Tu opinión'], a:1, e:'Análisis completo.' },
+    { q:'Tu opinión va en:', o:['3a','3b','Resumen'], a:1, e:'Valoración.' },
+    { q:'Para detectar la tesis:', o:['1ª frase','La idea defendida','Buscar adjetivos'], a:1, e:'La idea central sostenida.' },
+    { q:'Las reiteraciones se comentan en:', o:['3a','3b','Resumen'], a:0, e:'Recursos = análisis.' }
+  ],
+  'com.t5': [
+    { q:'En 3b valoras:', o:['Solo si te gusta','Vigencia, intención, juicio','Solo estilo'], a:1, e:'Orden estricto.' },
+    { q:'El juicio personal:', o:['Categórico y breve','Razonado y matizado','Una frase'], a:1, e:'4-5 líneas razonadas.' },
+    { q:'Vigencia se refiere a:', o:['Si es actual','Si está bien escrito','Si lo entiendes'], a:0, e:'Actualidad del tema.' },
+    { q:'Si discrepas del autor:', o:['Insultas','Argumentas la discrepancia','Coincides'], a:1, e:'Argumenta con respeto.' }
+  ],
+  'ing.t1': [
+    { q:'"I ___ here since 2020"', o:['live','am living','have lived'], a:2, e:'Present perfect with since.' },
+    { q:'"She ___ tennis every Sunday"', o:['plays','is playing','played'], a:0, e:'Present simple for habits.' },
+    { q:'Past simple of "go":', o:['goed','went','gone'], a:1, e:'Went.' },
+    { q:'"I ___ a book now"', o:['read','am reading','have read'], a:1, e:'Present continuous.' },
+    { q:'Past perfect:', o:['I had eaten before he arrived','I have eaten','I am eating'], a:0, e:'Had + past part.' }
+  ],
+  'ing.t2': [
+    { q:'"You ___ smoke here, it\'s forbidden"', o:['mustn\'t','don\'t have to','shouldn\'t'], a:0, e:'Mustn\'t = prohibition.' },
+    { q:'"He ___ be at home, lights are on"', o:['must','can','should'], a:0, e:'Must = strong deduction.' },
+    { q:'"You ___ study more, advice"', o:['must','should','have to'], a:1, e:'Should = advice.' },
+    { q:'"___ I help you?" (polite)', o:['Must','Should','May'], a:2, e:'May/Can.' },
+    { q:'Past of "can":', o:['caned','could','can\'t'], a:1, e:'Could.' }
+  ],
+  'ing.t3': [
+    { q:'"actually" means:', o:['actualmente','en realidad','realmente'], a:1, e:'En realidad.' },
+    { q:'"library" means:', o:['librería','biblioteca','libro'], a:1, e:'Biblioteca.' },
+    { q:'"sensible" means:', o:['sensible emocional','sensato','razonable'], a:1, e:'Sensato.' },
+    { q:'"realize" means:', o:['realizar','darse cuenta','reactivar'], a:1, e:'Darse cuenta.' },
+    { q:'"fabric" means:', o:['fábrica','tejido','fabricar'], a:1, e:'Tejido.' },
+    { q:'"embarrassed":', o:['embarazada','avergonzado','enfadado'], a:1, e:'Avergonzado.' }
+  ],
+  'ing.t4': [
+    { q:'1st conditional:', o:['If I have time, I will go','If I had time, I would go','If I had had time'], a:0, e:'Real future.' },
+    { q:'2nd conditional:', o:['If I have time, I go','If I had time, I would go','If I had had'], a:1, e:'Hypothetical.' },
+    { q:'3rd conditional:', o:['If I have','If I had','If I had had time, I would have gone'], a:2, e:'Past hypothetical.' },
+    { q:'"Unless" means:', o:['if','if not','because'], a:1, e:'If not.' }
+  ],
+  'ing.t5': [
+    { q:'Contrast connector:', o:['However','Moreover','Therefore'], a:0, e:'However.' },
+    { q:'Consequence:', o:['Although','As a result','Furthermore'], a:1, e:'As a result.' },
+    { q:'Adding info:', o:['Moreover','Despite','Although'], a:0, e:'Moreover.' },
+    { q:'Expressing opinion:', o:['In my opinion','For example','In conclusion'], a:0, e:'In my opinion.' },
+    { q:'Giving example:', o:['However','For instance','Therefore'], a:1, e:'For instance.' }
+  ],
+  'ing.t6': [
+    { q:'"Sustainable":', o:['quick','able to be maintained','expensive'], a:1, e:'Eco-friendly.' },
+    { q:'"Peer pressure":', o:['Authority','From age group','Financial'], a:1, e:'From same age/social group.' },
+    { q:'"Wellbeing":', o:['wealth','healthy & happy','workplace'], a:1, e:'Healthy and happy state.' },
+    { q:'"Ban" (verb):', o:['allow','prohibit','reduce'], a:1, e:'Prohibit.' },
+    { q:'"Diversity" antonym:', o:['variety','uniformity','equality'], a:1, e:'Uniformity.' }
+  ],
+  'hist.t1': [
+    { q:'¿Año Revolución Francesa?', o:['1776','1789','1799'], a:1, e:'Bastilla, 14 julio 1789.' },
+    { q:'¿Qué declaró 1789?', o:['República','Derechos del Hombre','Imperio'], a:1, e:'DDH y del Ciudadano.' },
+    { q:'¿Quién protagonizó el Terror?', o:['Robespierre','Marat','Danton'], a:0, e:'Robespierre.' },
+    { q:'Napoleón emperador en:', o:['1799','1804','1815'], a:1, e:'1804.' },
+    { q:'Caída definitiva de Napoleón:', o:['Austerlitz','Waterloo','Trafalgar'], a:1, e:'Waterloo, 1815.' },
+    { q:'Congreso de Viena (1815):', o:['Napoleón','Metternich','Garibaldi'], a:1, e:'Canciller austríaco.' },
+    { q:'"Sangre y hierro" =', o:['Cavour','Bismarck','Mazzini'], a:1, e:'Unificación alemana.' },
+    { q:'Unificación italiana:', o:['1848','1861','1871'], a:1, e:'Reino de Italia 1861.' }
+  ],
+  'hist.t2': [
+    { q:'¿Dónde empezó la R. Industrial?', o:['Francia','Inglaterra','Bélgica'], a:1, e:'Inglaterra 1760-1850.' },
+    { q:'Watt y máquina de vapor:', o:['1750','1769','1820'], a:1, e:'1769.' },
+    { q:'"Enclosures":', o:['Cárceles','Cercamientos','Aranceles'], a:1, e:'Privatización de tierras.' },
+    { q:'Manifiesto Comunista:', o:['1848','1864','1871'], a:0, e:'Marx y Engels, 1848.' },
+    { q:'I Internacional:', o:['1848','1864','1871'], a:1, e:'1864.' },
+    { q:'Anarquista, opuesto a Marx:', o:['Lenin','Bakunin','Engels'], a:1, e:'Bakunin.' },
+    { q:'Energías 2ª R. Industrial:', o:['Carbón y vapor','Electricidad y petróleo','Nuclear'], a:1, e:'Desde 1870.' }
+  ],
+  'hist.t3': [
+    { q:'Conferencia de Berlín:', o:['1875','1884-85','1898'], a:1, e:'Reparto África.' },
+    { q:'Países africanos independientes:', o:['Egipto y Sudán','Etiopía y Liberia','Marruecos'], a:1, e:'Solo esos dos.' },
+    { q:'"Joya de la corona" británica:', o:['Sudáfrica','India','Australia'], a:1, e:'India.' },
+    { q:'Canal de Suez bajo UK:', o:['1869','1875','1882'], a:1, e:'1875.' },
+    { q:'Era Meiji en Japón:', o:['Colonización','Modernización propia','Aislamiento'], a:1, e:'Modernización + expansión.' },
+    { q:'Guerras del opio:', o:['China','Japón','Vietnam'], a:0, e:'China vs UK.' }
+  ],
+  'hist.t4': [
+    { q:'Detonante IGM:', o:['Asesinato Sarajevo','Lusitania','Polonia'], a:0, e:'Francisco Fernando, 1914.' },
+    { q:'Triple Alianza:', o:['Francia, UK, Rusia','Alemania, Austria, Italia','EEUU, UK'], a:1, e:'Alemania + Austria + Italia.' },
+    { q:'EEUU entró en:', o:['1914','1917','1918'], a:1, e:'1917.' },
+    { q:'Tratado que cerró IGM:', o:['Versalles','Maastricht','Tordesillas'], a:0, e:'Versalles 1919.' },
+    { q:'R. Rusa de Octubre:', o:['Trotski','Lenin','Stalin'], a:1, e:'Lenin y bolcheviques.' },
+    { q:'Lema bolchevique:', o:['Lib., Igu., Frat.','Pan, tierra y paz','Sangre y lágrimas'], a:1, e:'Pan, tierra y paz.' },
+    { q:'Crack 1929 en:', o:['Londres','Berlín','Nueva York'], a:2, e:'Jueves Negro NYC.' },
+    { q:'Marcha sobre Roma (1922):', o:['Hitler','Mussolini','Franco'], a:1, e:'Mussolini.' },
+    { q:'Hitler canciller:', o:['1923','1933','1939'], a:1, e:'Enero 1933.' }
+  ],
+  'hist.t5': [
+    { q:'Inicio IIGM:', o:['1 sept 1939','7 dic 1941','6 jun 1944'], a:0, e:'Invasión Polonia.' },
+    { q:'Op. Barbarroja:', o:['Francia','URSS','UK'], a:1, e:'1941, URSS.' },
+    { q:'Pearl Harbor:', o:['1939','1941','1944'], a:1, e:'Dic 1941.' },
+    { q:'Giro frente Este:', o:['Stalingrado','Normandía','Berlín'], a:0, e:'Stalingrado.' },
+    { q:'Día D Normandía:', o:['1 sept 1939','6 jun 1944','8 may 1945'], a:1, e:'6 jun 1944.' },
+    { q:'Bombas atómicas:', o:['Tokio y Kioto','Hiroshima y Nagasaki','Osaka'], a:1, e:'Agosto 1945.' },
+    { q:'Bloques Guerra Fría:', o:['OTAN vs P. Varsovia','OEA vs Comecon','UE vs CEI'], a:0, e:'OTAN vs P. Varsovia.' },
+    { q:'Crisis misiles:', o:['Cuba','Vietnam','Berlín'], a:0, e:'Cuba 1962.' },
+    { q:'Caída Muro Berlín:', o:['1985','1989','1991'], a:1, e:'9 nov 1989.' },
+    { q:'Disolución URSS:', o:['1989','1991','1993'], a:1, e:'Dic 1991.' }
+  ],
+  'hist.t67': [
+    { q:'India independiente:', o:['1945','1947','1950'], a:1, e:'1947.' },
+    { q:'Estado de Israel:', o:['1945','1948','1956'], a:1, e:'14 may 1948.' },
+    { q:'Bandung No Alineados:', o:['1945','1955','1973'], a:1, e:'Nehru, Nasser, Tito.' },
+    { q:'Guerra Seis Días:', o:['1956','1967','1973'], a:1, e:'1967.' },
+    { q:'Fin Vietnam:', o:['1973','1975','1991'], a:1, e:'1975.' },
+    { q:'Maastricht UE:', o:['1957','1986','1992'], a:2, e:'1992.' },
+    { q:'Euro circulación:', o:['1992','1999','2002'], a:2, e:'1 ene 2002.' }
+  ],
+  'fil.platon': [
+    { q:'El Fedón trata sobre:', o:['Justicia','Inmortalidad del alma','Amor'], a:1, e:'Último día de Sócrates.' },
+    { q:'Las Ideas son:', o:['Pensamientos subjetivos','Realidades eternas','Sensaciones'], a:1, e:'Realidades perfectas e inteligibles.' },
+    { q:'"Anámnesis" =', o:['Olvido','Reminiscencia','Visión mística'], a:1, e:'Aprender = recordar.' },
+    { q:'Dualismo platónico:', o:['Cuerpo y alma uno','Distintos','Solo cuerpo'], a:1, e:'Cuerpo mortal vs alma inmortal.' },
+    { q:'Dialéctica conduce a:', o:['Opinión','Las Ideas','Fe'], a:1, e:'Mundo inteligible.' },
+    { q:'Contexto Platón:', o:['Roma s.I','Atenas s.IV a.C.','Edad Media'], a:1, e:'Discípulo de Sócrates.' },
+    { q:'El cuerpo es:', o:['Verdadero yo','Prisión del alma','Eterno'], a:1, e:'Prisión.' }
+  ],
+  'fil.tomas': [
+    { q:'Las 5 vías demuestran:', o:['El alma','Existencia de Dios','Libre albedrío'], a:1, e:'Movimiento, causalidad, contingencia, grados, orden.' },
+    { q:'Razón y fe son:', o:['Contrarias','Complementarias','Idénticas'], a:1, e:'Fe = supraracional.' },
+    { q:'En Dios, esencia y existencia:', o:['Distintas','Coinciden','No existen'], a:1, e:'Ser necesario.' },
+    { q:'Aristóteles llega por:', o:['Platón','Mundo árabe (Averroes)','Romanos'], a:1, e:'Vía Averroes.' },
+    { q:'Bien común =', o:['Riqueza personal','Fin de la sociedad','Solo religioso'], a:1, e:'Base de la ley justa.' },
+    { q:'Tomás vive en siglo:', o:['IV','XIII','XVII'], a:1, e:'1225-1274.' }
+  ],
+  'fil.descartes': [
+    { q:'Frase clave Descartes:', o:['Conócete','Pienso luego existo','Yo y mi circunstancia'], a:1, e:'Cogito.' },
+    { q:'Duda metódica es:', o:['Escéptica','Provisional','Definitiva'], a:1, e:'Busca lo cierto.' },
+    { q:'Res cogitans:', o:['Materia','Alma pensante','Dios'], a:1, e:'Sustancia pensante.' },
+    { q:'Método cartesiano tiene:', o:['3 reglas','4 reglas','5 reglas'], a:1, e:'Evidencia, análisis, síntesis, enumeración.' },
+    { q:'Descartes siglo:', o:['XV','XVII','XIX'], a:1, e:'1596-1650.' },
+    { q:'Reacciona contra:', o:['Empirismo','Escolástica','Idealismo'], a:1, e:'Escolástica medieval.' }
+  ],
+  'fil.ortega': [
+    { q:'Frase clave Ortega:', o:['Pienso luego existo','Yo soy yo y mi circunstancia','Conócete'], a:1, e:'Raciovitalismo.' },
+    { q:'Realidad radical para Ortega:', o:['Dios','Mi vida','Materia'], a:1, e:'Lo más inmediato.' },
+    { q:'Raciovitalismo supera:', o:['Solo racionalismo','Solo vitalismo','Ambos'], a:2, e:'Integra razón y vida.' },
+    { q:'Critica del idealismo:', o:['No usa razón','Yo aislado','Materialista'], a:1, e:'No hay yo sin mundo.' },
+    { q:'Razón histórica exige:', o:['Verdades eternas','Contexto vital','Metafísica atemporal'], a:1, e:'Ideas en su circunstancia.' },
+    { q:'Contexto Ortega:', o:['Ilustración','Crisis modernidad y fascismos','Posguerra fría'], a:1, e:'España años 30.' }
+  ],
+  'fil.russell': [
+    { q:'Russell representa:', o:['Existencialismo','Filosofía analítica','Idealismo'], a:1, e:'Con Frege y Wittgenstein.' },
+    { q:'Para Russell la filosofía es:', o:['Sistema metafísico','Análisis lógico','Mística'], a:1, e:'Clarificar lenguaje.' },
+    { q:'Atomismo lógico:', o:['Hechos atómicos','Holístico','Dialéctico'], a:0, e:'Mundo de hechos simples.' },
+    { q:'Conocimiento por familiaridad:', o:['Inferencia','Experiencia directa','Revelación'], a:1, e:'vs descripción.' },
+    { q:'Russell defiende:', o:['Racionalismo','Empirismo','Idealismo'], a:1, e:'Experiencia + lógica.' },
+    { q:'Nobel Literatura:', o:['1923','1950','1972'], a:1, e:'1950.' }
+  ]
+};
+
+/* ============================================================ SM-2 ============================================================ */
+const DAY = 86400000;
+function getCard(id){
+  if(!state.cards[id]) state.cards[id] = { ef: 2.5, interval: 0, reps: 0, due: Date.now(), lastQ: null, lapses: 0, times: [] };
+  return state.cards[id];
+}
+function sm2(card, q){
+  if (q < 3) { card.reps = 0; card.interval = 1; card.lapses++; }
+  else {
+    if (card.reps === 0) card.interval = 1;
+    else if (card.reps === 1) card.interval = 6;
+    else card.interval = Math.round(card.interval * card.ef);
+    card.reps++;
+    card.ef = Math.max(1.3, card.ef + (0.1 - (5-q) * (0.08 + (5-q) * 0.02)));
+  }
+  card.due = Date.now() + card.interval * DAY;
+  card.lastQ = q;
+  return card;
+}
+function autoQuality(correct, ms){
+  if (!correct) return ms < 8000 ? 1 : 2;
+  if (ms < 5000) return 5;
+  if (ms < 12000) return 4;
+  return 3;
+}
+
+/* ============================================================ TOPICS ============================================================ */
+function getTopic(tid){
+  if(!state.topics[tid]) state.topics[tid] = { mastery: 0, attempts: 0, correct: 0, status:'available', priority:'normal', lastSeen: 0 };
+  return state.topics[tid];
+}
+function updateMastery(tid, correct){
+  const t = getTopic(tid);
+  t.attempts++;
+  if (correct) t.correct++;
+  t.mastery = t.correct / t.attempts;
+  t.lastSeen = Date.now();
+}
+function isUnlocked(topic){
+  if (!topic) return false;
+  if (topic.level === 'foundation') return true;
+  if (state.unlocks.includes(topic.id)) return true;
+  if (state.locks.includes(topic.id)) return false;
+  const subjId = topic.id.split('.')[0];
+  const found = TOPICS[subjId].filter(t => t.level === 'foundation');
+  let total = 0, correct = 0;
+  found.forEach(t => { const st = state.topics[t.id]; if (st) { total += st.attempts; correct += st.correct; }});
+  if (total < 6) return false;
+  return (correct / total) >= 0.8;
+}
+
+/* ============================================================ METRICS ============================================================ */
+function calcMetrics(){
+  const now = Date.now();
+  const ids = Object.keys(state.cards);
+  let retSum = 0, retN = 0;
+  ids.forEach(id => {
+    const c = state.cards[id];
+    if (c.reps > 0) {
+      const lastReview = c.due - c.interval * DAY;
+      const elapsedDays = Math.max(0, (now - lastReview) / DAY);
+      const stability = Math.max(1, c.interval);
+      retSum += Math.exp(-elapsedDays / (stability * 1.5));
+      retN++;
+    }
+  });
+  const retention = retN > 0 ? Math.round(retSum / retN * 100) : 0;
+  const mastered = ids.filter(id => state.cards[id].interval >= 21).length;
+  const subjMast = SUBJECTS.map(s => {
+    const tops = TOPICS[s.id] || [];
+    let totalA = 0, totalC = 0;
+    tops.forEach(t => { const st = state.topics[t.id]; if (st) { totalA += st.attempts; totalC += st.correct; }});
+    return totalA > 0 ? totalC / totalA : 0;
+  });
+  const avgMast = subjMast.reduce((a,b) => a+b, 0) / subjMast.length;
+  let prob = avgMast === 0 ? 0 : Math.round(100 / (1 + Math.exp(-8 * (avgMast - 0.5))));
+  const exam = new Date(state.examDate);
+  const daysToExam = Math.ceil((exam - now) / DAY);
+  let totalItems = 0, remaining = 0;
+  SUBJECTS.forEach(s => {
+    (TOPICS[s.id] || []).forEach(t => {
+      totalItems++;
+      const st = state.topics[t.id];
+      if (!st || st.mastery < 0.8) remaining++;
+    });
+  });
+  const recentSessions = state.sessions.filter(s => (now - new Date(s.date).getTime()) < 14 * DAY);
+  const pace = recentSessions.length > 0 ? Math.max(0.1, recentSessions.reduce((a,s) => a + s.correct, 0) / 14 / 6) : 0.1;
+  const daysNeeded = pace > 0.1 ? Math.ceil(remaining * 6 / pace) : daysToExam * 3;
+  const procDays = daysNeeded - daysToExam;
+  return { retention, prob, mastered, procDays, daysToExam, totalItems, remaining };
+}
+
+/* ============================================================ RENDER ============================================================ */
+function renderNav(){
+  const nav = document.getElementById('nav');
+  const items = [
+    { type:'grp', label:'Hoy' },
+    { type:'a', id:'hoy', name:'Práctica del día', dot:'var(--acc)' },
+    { type:'a', id:'dashboard', name:'Panel y métricas', dot:'var(--acc2)' },
+    { type:'grp', label:'Asignaturas' },
+    ...SUBJECTS.map(s => ({ type:'a', id:s.id, name:s.name, dot:s.color })),
+    { type:'grp', label:'Práctica' },
+    { type:'a', id:'examenes', name:'Exámenes simulados', dot:'var(--hi)' },
+    { type:'grp', label:'Sistema' },
+    { type:'a', id:'sync', name:'Sync con Claude', dot:'var(--p1)' },
+    { type:'a', id:'plan', name:'Plan 12 meses', dot:'var(--mut)' }
+  ];
+  nav.innerHTML = items.map(it => it.type === 'grp' ? `<div class="grp">${it.label}</div>` : `<a data-page="${it.id}"><span class="dot" style="background:${it.dot}"></span>${it.name}</a>`).join('');
+  nav.querySelectorAll('a').forEach(a => a.onclick = () => goto(a.dataset.page));
+}
+
+let currentPage = 'hoy';
+function goto(id){
+  currentPage = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === id));
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('active', a.dataset.page === id));
+  location.hash = id; window.scrollTo(0, 0);
+  if (SUBJECTS.find(s => s.id === id)) renderSubject(id);
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'hoy') renderToday();
+  if (id === 'examenes') renderExamList();
+  if (id === 'sync') renderNotes();
+}
+
+function renderDashboard(){
+  const m = calcMetrics();
+  const $ = id => document.getElementById(id);
+  $('mRet').textContent = m.retention + '%';
+  $('mProb').textContent = m.prob + '%';
+  $('mMast').textContent = m.mastered;
+  if (m.procDays <= 0) { $('mProc').textContent = '✓'; }
+  else { $('mProc').textContent = '+' + m.procDays + 'd'; }
+  $('streakBadge').textContent = 'Racha ' + state.streak.days + (state.streak.days === 1 ? ' día' : ' días');
+  const grid = $('subjGrid');
+  grid.innerHTML = SUBJECTS.map(s => {
+    const tops = TOPICS[s.id];
+    let totalA = 0, totalC = 0, masteredT = 0;
+    tops.forEach(t => { const st = state.topics[t.id]; if (st) { totalA += st.attempts; totalC += st.correct; if (st.mastery >= 0.8) masteredT++; }});
+    const pct = totalA > 0 ? Math.round(totalC / totalA * 100) : 0;
+    return `<div class="subj-card" onclick="goto('${s.id}')">
+      <div class="head"><h3>${s.icon} ${s.name}</h3><span style="color:${s.color};font-weight:700">${pct}%</span></div>
+      <div class="meta">${s.risk}</div>
+      <div class="bar"><div style="width:${pct}%;background:${s.color}"></div></div>
+      <div class="nums"><span><b>${masteredT}</b>dominados</span><span><b>${totalA}</b>respuestas</span><span><b>${tops.length - masteredT}</b>pendientes</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSubject(sid){
+  const subj = SUBJECTS.find(s => s.id === sid);
+  const tops = TOPICS[sid];
+  const el = document.getElementById(sid);
+  el.innerHTML = `
+    <h2>${subj.icon} ${subj.name} <span class="badge">${subj.risk}</span></h2>
+    <p class="lead">Pulsa un tema para entrar en modo desafío activo. Los avanzados se desbloquean al 80% en los temas base.</p>
+    <div class="topic-list">
+      ${tops.map(t => {
+        const st = state.topics[t.id] || { mastery: 0, attempts: 0 };
+        const unlocked = isUnlocked(t);
+        const pct = Math.round((st.mastery || 0) * 100);
+        const mc = pct >= 80 ? 'm-high' : pct >= 50 ? 'm-mid' : 'm-low';
+        const now = Date.now();
+        const due = (CARDS[t.id] || []).filter((c, i) => { const card = state.cards[t.id+'#'+i]; return !card || card.due <= now; }).length;
+        const tagClass = t.tag.includes('ALTO') || t.tag.includes('CLAVE') ? 't-high' : t.tag.includes('GARANTIZADO') || t.tag.includes('×2') ? 't-ok' : t.tag.includes('PROBABLE') ? 't-mid' : 't-low';
+        return `<div class="topic ${unlocked ? '' : 'locked'}" ${unlocked ? `onclick="startChallenge('${t.id}')"` : ''}>
+          <div class="left">
+            <div class="ttl">${unlocked ? '' : '🔒 '}${t.name} <span class="tag ${tagClass}">${t.tag}</span></div>
+            <div class="meta">
+              <span>${t.level === 'foundation' ? 'Base' : 'Avanzado'}</span>
+              <span>${(CARDS[t.id] || []).length} cards</span>
+              <span>${st.attempts || 0} intentos</span>
+              ${due > 0 && unlocked ? `<span style="color:var(--hi)">${due} repasar</span>` : ''}
+            </div>
+          </div>
+          <div class="right">
+            <div class="mini-bar"><div style="width:${pct}%;background:${pct >= 80 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--err)'}"></div></div>
+            <div class="mast ${mc}">${pct}%</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="${sid}-challenge"></div>
+    <div id="${sid}-theory" style="margin-top:24px"></div>
+  `;
+  injectTheory(sid);
+}
+
+/* ============================================================ CHALLENGE ============================================================ */
+let activeChallenge = null;
+function startChallenge(topicId){
+  const cards = CARDS[topicId] || [];
+  if (cards.length === 0) { toast('No hay cards', true); return; }
+  const indexed = cards.map((c, i) => ({ c, i, cid: topicId + '#' + i }));
+  indexed.sort((a, b) => (state.cards[a.cid]?.due || 0) - (state.cards[b.cid]?.due || 0));
+  activeChallenge = { topicId, queue: indexed, idx: 0, startTime: 0, results: [] };
+  renderChallengeStep();
+}
+function renderChallengeStep(){
+  const ac = activeChallenge;
+  const subjId = ac.topicId.split('.')[0];
+  const target = document.getElementById(subjId + '-challenge');
+  if (ac.idx >= ac.queue.length) {
+    const correct = ac.results.filter(r => r.correct).length;
+    const total = ac.results.length;
+    const time = ac.results.reduce((a,r) => a + r.time, 0);
+    state.sessions.push({ date: new Date().toISOString().slice(0,10), items: total, correct, time, topic: ac.topicId });
+    save();
+    target.innerHTML = `
+      <div class="ch-wrap">
+        <div class="ch-meta"><div class="info">Sesión completada · <b>${ac.topicId}</b></div></div>
+        <div class="center" style="padding:24px 0">
+          <div style="font-size:48px;font-weight:700;color:var(--acc);margin-bottom:8px">${correct} / ${total}</div>
+          <div class="dim">Tiempo medio · ${total ? Math.round(time/total/1000) : 0}s por card</div>
+          <div class="dim">Dominio del tema · ${Math.round((state.topics[ac.topicId]?.mastery || 0) * 100)}%</div>
+        </div>
+        <div class="actions" style="justify-content:center">
+          <button class="btn" onclick="startChallenge('${ac.topicId}')">Repetir tema</button>
+          <button class="btn sec" onclick="document.getElementById('${subjId}-challenge').innerHTML='';renderSubject('${subjId}')">Volver al listado</button>
+        </div>
+      </div>
+    `;
+    activeChallenge = null;
+    return;
+  }
+  const item = ac.queue[ac.idx];
+  ac.startTime = Date.now();
+  target.innerHTML = `
+    <div class="ch-wrap">
+      <div class="ch-meta">
+        <div class="info">Card <b>${ac.idx + 1} / ${ac.queue.length}</b> · Tema <b>${ac.topicId}</b></div>
+        <div class="timer" id="chTimer">00.0s</div>
+      </div>
+      <div class="ch-q">${item.c.q}</div>
+      <div class="ch-opts" id="chOpts">
+        ${item.c.o.map((op, j) => `<div class="ch-opt" onclick="answerChallenge(${j})"><span class="k">${j+1}</span><span>${op}</span></div>`).join('')}
+      </div>
+      <div class="expl" id="chExpl"></div>
+      <div id="chQual" style="display:none">
+        <div class="dim center" style="margin-top:14px;font-size:12px">¿Cómo lo has visto? Esto ajusta el intervalo SRS.</div>
+        <div class="qual">
+          <button data-q="2" onclick="rateChallenge(2)">Difícil<span class="desc">vuelve mañana</span></button>
+          <button data-q="3" onclick="rateChallenge(3)">Bien<span class="desc">en pocos días</span></button>
+          <button data-q="5" onclick="rateChallenge(5)">Fácil<span class="desc">bastantes días</span></button>
+        </div>
+      </div>
+    </div>
+  `;
+  startQTimer();
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+}
+let qTimer = null;
+function startQTimer(){
+  if (qTimer) clearInterval(qTimer);
+  qTimer = setInterval(() => {
+    const t = document.getElementById('chTimer');
+    if (!t || !activeChallenge) { clearInterval(qTimer); return; }
+    const s = (Date.now() - activeChallenge.startTime) / 1000;
+    t.textContent = s.toFixed(1) + 's';
+    if (s > 20) t.classList.add('danger');
+  }, 100);
+}
+function answerChallenge(j){
+  if (!activeChallenge) return;
+  if (qTimer) clearInterval(qTimer);
+  const ac = activeChallenge;
+  const item = ac.queue[ac.idx];
+  const elapsed = Date.now() - ac.startTime;
+  const correct = j === item.c.a;
+  document.querySelectorAll('#chOpts .ch-opt').forEach((o, i) => {
+    o.onclick = null;
+    if (i === item.c.a) o.classList.add('correct');
+    if (i === j && !correct) o.classList.add('wrong');
+  });
+  const expl = document.getElementById('chExpl');
+  expl.innerHTML = `<strong>${correct ? '✓ Correcto' : '✗ Incorrecto'}.</strong> ${item.c.e}`;
+  expl.classList.add('show');
+  document.getElementById('chQual').style.display = 'block';
+  ac.results.push({ correct, time: elapsed, autoQ: autoQuality(correct, elapsed) });
+  updateMastery(ac.topicId, correct);
+}
+function rateChallenge(userQ){
+  if (!activeChallenge) return;
+  const ac = activeChallenge;
+  const item = ac.queue[ac.idx];
+  const card = getCard(item.cid);
+  const last = ac.results[ac.results.length - 1];
+  card.times.push(last.time);
+  const finalQ = last.correct ? userQ : Math.min(2, last.autoQ);
+  sm2(card, finalQ);
+  save();
+  ac.idx++;
+  renderChallengeStep();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!activeChallenge) return;
+  const item = activeChallenge.queue[activeChallenge.idx];
+  if (!item) return;
+  const expl = document.getElementById('chExpl');
+  if (expl && !expl.classList.contains('show')) {
+    if (/^[1-3]$/.test(e.key)) {
+      const j = parseInt(e.key) - 1;
+      if (j < item.c.o.length) answerChallenge(j);
+    }
+  } else {
+    if (e.key === 'd' || e.key === '1') rateChallenge(2);
+    if (e.key === 'b' || e.key === '2') rateChallenge(3);
+    if (e.key === 'f' || e.key === '3') rateChallenge(5);
+  }
+});
+
+/* ============================================================ TODAY ============================================================ */
+function renderToday(){
+  const now = Date.now();
+  let due = [], fresh = [];
+  Object.keys(CARDS).forEach(tid => {
+    const subjId = tid.split('.')[0];
+    const topicMeta = TOPICS[subjId].find(t => t.id === tid);
+    if (!isUnlocked(topicMeta)) return;
+    CARDS[tid].forEach((c, i) => {
+      const cid = tid + '#' + i;
+      const card = state.cards[cid];
+      if (!card) fresh.push({ tid, i, cid, c });
+      else if (card.due <= now) due.push({ tid, i, cid, c, card });
+    });
+  });
+  due.sort((a, b) => {
+    const pa = state.topics[a.tid]?.priority === 'high' ? -1 : state.topics[a.tid]?.priority === 'low' ? 1 : 0;
+    const pb = state.topics[b.tid]?.priority === 'high' ? -1 : state.topics[b.tid]?.priority === 'low' ? 1 : 0;
+    return pa - pb || a.card.due - b.card.due;
+  });
+  const today = new Date().toISOString().slice(0,10);
+  const todayDone = state.sessions.filter(s => s.date === today).reduce((a, s) => a + s.items, 0);
+  document.getElementById('dueCount').textContent = due.length;
+  document.getElementById('newCount').textContent = fresh.length;
+  document.getElementById('todayDone').textContent = todayDone;
+  document.getElementById('hoyBadge').textContent = `${due.length + fresh.length} cards en cola`;
+  const content = document.getElementById('hoyContent');
+  if (due.length === 0 && fresh.length === 0) {
+    content.innerHTML = `<div class="q-empty"><div class="big">✓</div>No hay cards pendientes hoy. Vuelve mañana o adelanta un tema avanzado.</div>`;
+    return;
+  }
+  const byTopic = {};
+  [...due, ...fresh.slice(0, 20)].forEach(x => { if (!byTopic[x.tid]) byTopic[x.tid] = []; byTopic[x.tid].push(x); });
+  content.innerHTML = Object.keys(byTopic).map(tid => {
+    const subjId = tid.split('.')[0];
+    const topicMeta = TOPICS[subjId].find(t => t.id === tid);
+    const subjMeta = SUBJECTS.find(s => s.id === subjId);
+    return `<div style="margin-bottom:10px;padding:12px 14px;background:var(--bg3);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div><b style="color:${subjMeta.color}">${subjMeta.icon} ${topicMeta.name}</b> · <span class="dim">${byTopic[tid].length} card${byTopic[tid].length === 1 ? '' : 's'}</span></div>
+      <button class="btn" onclick="goto('${subjId}');setTimeout(()=>startChallenge('${tid}'),250)">Estudiar</button>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================ THEORY ============================================================ */
+const THEORY = {
+  cast: `
+  <div class="card"><h3>Estructura del examen · 10 preguntas (1 pt c/u)</h3>
+    <table class="tbl">
+      <tr><th>#</th><th>Qué piden</th></tr>
+      <tr><td>1</td><td>Corregir errores ortográficos (−0,20/error)</td></tr>
+      <tr><td>2</td><td>Poner tildes + explicar (−0,20/tilde)</td></tr>
+      <tr><td>3</td><td>Género especial + plural difícil</td></tr>
+      <tr><td>4</td><td>Determinantes + 2 incorrecciones</td></tr>
+      <tr><td>5</td><td>Perífrasis + subjuntivo + 2 incorrecciones</td></tr>
+      <tr><td>6</td><td>Funciones sintácticas + 2 incorrecciones</td></tr>
+      <tr><td>7</td><td>Tipos de oración (modalidad + estructura)</td></tr>
+      <tr><td>8</td><td>4 enunciados del habla cotidiana</td></tr>
+      <tr><td>9</td><td>Prefijos + sufijos</td></tr>
+      <tr><td>10</td><td>Sinónimos + antónimo + hipónimo</td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>Tilde diacrítica · de memoria</h3>
+    <p><span class="kbd">él/el</span> · <span class="kbd">tú/tu</span> · <span class="kbd">mí/mi</span> · <span class="kbd">sé/se</span> · <span class="kbd">más/mas</span> · <span class="kbd">té/te</span> · <span class="kbd">sí/si</span> · <span class="kbd">qué/que</span></p>
+    <div class="ex"><span class="lbl">EJEMPLO</span>"El sabia que aun tenia tiempo, mas no queria perdonarse" → "Él sabía que aún tenía tiempo, mas no quería perdonarse" (5 tildes; mas sin tilde = adversativa).</div>
+  </div>
+  <div class="card"><h3>Funciones sintácticas · pruebas</h3>
+    <table class="tbl">
+      <tr><th>Función</th><th>Prueba</th></tr>
+      <tr><td>CD</td><td>Sustituible por lo/la/los/las</td></tr>
+      <tr><td>CI</td><td>Sustituible por le/les</td></tr>
+      <tr><td>CC</td><td>Modo/tiempo/lugar/causa…</td></tr>
+      <tr><td>Atributo</td><td>Verbo copulativo + adjetivo</td></tr>
+      <tr><td>C. Régimen</td><td>Preposición exigida por el verbo</td></tr>
+      <tr><td>C. Agente</td><td>En pasivas, con "por"</td></tr>
+    </table>
+  </div>`,
+  val: `
+  <div class="card"><h3>Estructura · 9 preguntes + redacció (val. doble)</h3>
+    <table class="tbl">
+      <tr><th>Pregunta</th><th>Contingut</th><th>Pts</th></tr>
+      <tr><td>1.1-1.6</td><td>Grafies, pronoms, verbs, prep., derivació, castellanismes</td><td>6</td></tr>
+      <tr><td>2.1</td><td>V/F text</td><td>1</td></tr>
+      <tr><td>2.2</td><td>Sinònims en context</td><td>1</td></tr>
+      <tr><td>2.3</td><td>Redacció d'opinió ~10 línies</td><td><b>2</b></td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>Pronoms febles · combinacions clau</h3>
+    <ul>
+      <li><strong>CI + CD m.s.:</strong> li + el → <span class="kbd">li'l</span></li>
+      <li><strong>CI + CD f.s.:</strong> li + la → <span class="kbd">li la</span></li>
+      <li><strong>CI + neutre:</strong> li + ho → <span class="kbd">li ho</span></li>
+      <li><strong>EN + HI:</strong> <span class="kbd">n'hi</span> · "n'hi ha tres"</li>
+    </ul>
+  </div>`,
+  com: `
+  <div class="card"><h3>Estructura · 75 minutos</h3>
+    <table class="tbl">
+      <tr><th>Orden óptimo</th><th>Pregunta</th><th>Pts</th><th>Tiempo</th></tr>
+      <tr><td>1º</td><td>Leer texto</td><td>—</td><td>7 min</td></tr>
+      <tr><td>2º</td><td>4 · Tema</td><td>1</td><td>3 min</td></tr>
+      <tr><td>3º</td><td>1 · Resumen ~10 líneas</td><td>2</td><td>12 min</td></tr>
+      <tr><td>4º</td><td>2 · 3 términos + antónimo</td><td>3</td><td>15 min</td></tr>
+      <tr><td>5º</td><td>3a · Análisis</td><td>2,5</td><td>25 min</td></tr>
+      <tr><td>6º</td><td>3b · Valoración</td><td>1,5</td><td>13 min</td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>Plantilla universal · Pregunta 3a</h3>
+    <ol>
+      <li><strong>TESIS:</strong> "El autor defiende que…"</li>
+      <li><strong>ESTRUCTURA:</strong> deductiva / inductiva / encuadrada</li>
+      <li><strong>PARTES:</strong> introducción / desarrollo / conclusión</li>
+      <li><strong>IDEAS PRINCIPALES:</strong> 1) … 2) …</li>
+      <li><strong>RECURSOS:</strong> ironía, paralelismos, metáforas</li>
+    </ol>
+  </div>
+  <div class="card"><h3>Plantilla · 3b (orden estricto)</h3>
+    <ol>
+      <li>VIGENCIA · INTENCIÓN · DESTINATARIOS · TEMAS · JUICIO</li>
+    </ol>
+  </div>`,
+  ing: `
+  <div class="card"><h3>Estructura · 5 preguntas fijas</h3>
+    <table class="tbl">
+      <tr><th>#</th><th>Task</th><th>Pts</th></tr>
+      <tr><td>1</td><td>Paraphrase (~1.5× original)</td><td>2</td></tr>
+      <tr><td>2</td><td>True/False (deja blanco si dudas)</td><td>2</td></tr>
+      <tr><td>3</td><td>4 words in text = 4 definitions</td><td>2</td></tr>
+      <tr><td>4</td><td>Multiple choice</td><td>2</td></tr>
+      <tr><td>5</td><td>2 opinion (25-50 words c/u)</td><td>2</td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>5 temas oficiales · mapa de riesgo</h3>
+    <table class="tbl">
+      <tr><th>Tema</th><th>¿Salió?</th><th>Riesgo</th></tr>
+      <tr><td>Tech & society</td><td>2023, 2024</td><td><span class="tag t-low">BAJO</span></td></tr>
+      <tr><td>Environment</td><td>2025</td><td><span class="tag t-low">BAJO</span></td></tr>
+      <tr><td>Health</td><td>Nunca</td><td><span class="tag t-high">ALTO</span></td></tr>
+      <tr><td>Solidarity</td><td>Nunca</td><td><span class="tag t-high">ALTO</span></td></tr>
+      <tr><td>Youth & drugs</td><td>Nunca</td><td><span class="tag t-high">ALTO</span></td></tr>
+    </table>
+  </div>`,
+  hist: `
+  <div class="card"><h3>Mapa de riesgo 2027</h3>
+    <table class="tbl">
+      <tr><th>Tema</th><th>Contenido</th><th>Riesgo</th></tr>
+      <tr><td>1</td><td>Revoluciones burguesas (1770-1870)</td><td><span class="tag t-ok">GARANTIZADO</span></td></tr>
+      <tr><td>2</td><td>Revolución Industrial</td><td><span class="tag t-high">MUY ALTO</span></td></tr>
+      <tr><td>3</td><td>Colonialismo</td><td><span class="tag t-high">MUY ALTO</span></td></tr>
+      <tr><td>4</td><td>Gran Guerra</td><td><span class="tag t-low">PROBABLE</span></td></tr>
+      <tr><td>5</td><td>IIGM y Guerra Fría</td><td><span class="tag t-high">MUY ALTO</span></td></tr>
+      <tr><td>6-7</td><td>Descolonización y globalización</td><td><span class="tag t-mid">MEDIO</span></td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>Plantilla 3-4 folios</h3>
+    <ol>
+      <li><strong>Introducción</strong> (½ folio): sitúa el tema, anuncia epígrafes.</li>
+      <li><strong>Desarrollo</strong> cronológico con fechas y vocabulario técnico.</li>
+      <li>Esqueleto: <strong>Causas → desarrollo → consecuencias</strong>.</li>
+      <li><strong>Análisis crítico</strong>: conecta procesos entre temas.</li>
+      <li><strong>Conclusión</strong>: síntesis + proyección al presente.</li>
+    </ol>
+    <div class="alert info">📝 Resistencia física: 3-4 folios a mano cansa. Practica con bolígrafo desde dic 2026.</div>
+  </div>`,
+  fil: `
+  <div class="card"><h3>Estructura · 75 minutos</h3>
+    <table class="tbl">
+      <tr><th>Parte</th><th>Contenido</th><th>Pts</th></tr>
+      <tr><td>1</td><td>Resumen y análisis</td><td>1</td></tr>
+      <tr><td>2</td><td>Contextualización histórica</td><td>1</td></tr>
+      <tr><td>3</td><td>Tema + Tesis + Argumentos + Problemas</td><td><b>4</b></td></tr>
+      <tr><td>4</td><td>Valoración crítica</td><td>1</td></tr>
+      <tr><td>5</td><td>2 términos NO en texto</td><td>1,5</td></tr>
+      <tr><td>6</td><td>2 términos EN el texto</td><td>1,5</td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>Frases clave por autor</h3>
+    <p>📜 <strong>Platón:</strong> "Aprender es recordar (anámnesis)"</p>
+    <p>⛪ <strong>Tomás:</strong> "Razón y fe son complementarias"</p>
+    <p>🔍 <strong>Descartes:</strong> "Pienso, luego existo"</p>
+    <p>🌍 <strong>Ortega:</strong> "Yo soy yo y mi circunstancia"</p>
+    <p>🔬 <strong>Russell:</strong> "La filosofía es análisis lógico"</p>
+  </div>`
+};
+function injectTheory(sid){
+  const el = document.getElementById(sid + '-theory');
+  if (el) el.innerHTML = '<h3 style="font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Teoría de referencia</h3>' + (THEORY[sid] || '');
+}
+
+/* ============================================================ EXAMS ============================================================ */
+const EXAMS = {
+  examCast: { title:'Lengua Castellana · simulacro', time: 30*60, pool: ['cast.t1','cast.t2','cast.t3','cast.t4','cast.t5','cast.t6'] },
+  examVal: { title:'Llengua Valenciana · simulacre', time: 30*60, pool: ['val.t1','val.t2','val.t3','val.t4','val.t5','val.t6'] },
+  examCom: { title:'Comentario · método', time: 20*60, pool: ['com.t1','com.t2','com.t3','com.t4','com.t5'] },
+  examIng: { title:'English · mini exam', time: 25*60, pool: ['ing.t1','ing.t2','ing.t3','ing.t4','ing.t5','ing.t6'] },
+  examHist: { title:'Historia · simulacro', time: 30*60, pool: ['hist.t1','hist.t2','hist.t3','hist.t4','hist.t5','hist.t67'] },
+  examFil: { title:'Filosofía · simulacro 5 autores', time: 30*60, pool: ['fil.platon','fil.ortega','fil.tomas','fil.descartes','fil.russell'] }
+};
+function renderExamList(){
+  const list = document.getElementById('examList');
+  list.innerHTML = Object.keys(EXAMS).map(k => {
+    const e = EXAMS[k];
+    const qcount = e.pool.reduce((a, t) => a + (CARDS[t] || []).length, 0);
+    return `<div class="exam-row">
+      <div class="info"><div class="ttl">${e.title}</div><div class="sub">${qcount} preguntas · ${Math.round(e.time/60)} min</div></div>
+      <button class="btn" onclick="startExam('${k}')">Empezar</button>
+    </div>`;
+  }).join('');
+}
+let examTimer = null;
+function startExam(key){
+  const ex = EXAMS[key];
+  document.getElementById('examList').style.display = 'none';
+  const runner = document.getElementById('examRunner');
+  runner.style.display = 'block';
+  let remaining = ex.time;
+  const bank = [];
+  ex.pool.forEach(t => (CARDS[t] || []).forEach((c, i) => bank.push({ c, tid: t, i })));
+  runner.innerHTML = `
+    <div class="ch-meta">
+      <div class="info">Examen · <b>${ex.title}</b></div>
+      <div class="timer" id="exTimer">${fmtTime(remaining)}</div>
+      <button class="btn sec" onclick="exitExam()">Salir</button>
+    </div>
+    <div id="exQs"></div>
+    <div class="actions"><button class="btn lg" onclick="finishExam('${key}',false)">Entregar examen</button></div>
+    <div id="exResult" style="margin-top:18px"></div>
+  `;
+  const qs = document.getElementById('exQs');
+  bank.forEach((it, i) => {
+    const q = document.createElement('div');
+    q.className = 'ch-wrap';
+    q.style.marginBottom = '10px';
+    q.innerHTML = `
+      <div class="ch-meta"><div class="info">Pregunta <b>${i+1} / ${bank.length}</b></div></div>
+      <div class="ch-q">${it.c.q}</div>
+      <div class="ch-opts">${it.c.o.map((op, j) => `<label class="ch-opt"><input type="radio" name="ex-${i}" value="${j}" style="display:none"><span class="k">${j+1}</span><span>${op}</span></label>`).join('')}</div>
+      <div class="expl"></div>
+    `;
+    qs.appendChild(q);
+  });
+  qs.querySelectorAll('.ch-opt').forEach(o => {
+    o.onclick = () => {
+      const par = o.parentElement;
+      par.querySelectorAll('.ch-opt').forEach(s => s.classList.remove('sel'));
+      o.classList.add('sel');
+      o.querySelector('input').checked = true;
+    };
+  });
+  examTimer = setInterval(() => {
+    remaining--;
+    const t = document.getElementById('exTimer');
+    if (!t) { clearInterval(examTimer); return; }
+    t.textContent = fmtTime(remaining);
+    if (remaining < 60) t.classList.add('danger');
+    if (remaining <= 0) { clearInterval(examTimer); finishExam(key, true); }
+  }, 1000);
+  runner.examBank = bank;
+}
+function finishExam(key, timeUp){
+  clearInterval(examTimer);
+  const runner = document.getElementById('examRunner');
+  const bank = runner.examBank;
+  let correct = 0;
+  bank.forEach((it, i) => {
+    const chosen = document.querySelector(`input[name="ex-${i}"]:checked`);
+    const opts = document.querySelectorAll(`#exQs > div:nth-of-type(${i+1}) .ch-opt`);
+    opts.forEach((o, j) => {
+      if (j === it.c.a) o.classList.add('correct');
+      if (chosen && parseInt(chosen.value) === j && j !== it.c.a) o.classList.add('wrong');
+    });
+    const expl = document.querySelector(`#exQs > div:nth-of-type(${i+1}) .expl`);
+    expl.innerHTML = `<strong>${chosen && parseInt(chosen.value) === it.c.a ? '✓' : '✗'}</strong> ${it.c.e}`;
+    expl.classList.add('show');
+    const ok = chosen && parseInt(chosen.value) === it.c.a;
+    if (ok) correct++;
+    const card = getCard(it.tid + '#' + it.i);
+    sm2(card, ok ? 4 : 1);
+    updateMastery(it.tid, ok);
+  });
+  const pct = Math.round(correct / bank.length * 100);
+  const nota = (correct / bank.length * 10).toFixed(1);
+  document.getElementById('exResult').innerHTML = `
+    <div class="ch-wrap" style="background:linear-gradient(135deg,rgba(94,234,212,.08),rgba(56,189,248,.04))">
+      <div style="font-size:42px;font-weight:700;color:var(--acc)">${correct} / ${bank.length}</div>
+      <div class="dim">${pct}% · Nota estimada PAU: <b style="color:var(--hi)">${nota}/10</b>${timeUp ? ' · ⏰ Tiempo agotado' : ''}</div>
+      <div class="actions"><button class="btn sec" onclick="exitExam()">Volver</button></div>
+    </div>
+  `;
+  state.sessions.push({ date: new Date().toISOString().slice(0,10), items: bank.length, correct, time: 0, exam: key });
+  save();
+  window.scrollTo(0, document.getElementById('exResult').offsetTop - 40);
+}
+function exitExam(){
+  clearInterval(examTimer);
+  document.getElementById('examRunner').style.display = 'none';
+  document.getElementById('examList').style.display = '';
+}
+function fmtTime(s){
+  const m = Math.floor(s/60), sec = s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/* ============================================================ SYNC ============================================================ */
+function genSnapshot(){
+  const m = calcMetrics();
+  const snap = {
+    v: 2,
+    generatedAt: new Date().toISOString(),
+    examDate: state.examDate,
+    daysToExam: m.daysToExam,
+    streak: state.streak.days,
+    metrics: { retention: m.retention, prob: m.prob, mastered: m.mastered, procDays: m.procDays },
+    subjects: SUBJECTS.map(s => ({
+      id: s.id, name: s.name,
+      topics: TOPICS[s.id].map(t => {
+        const st = state.topics[t.id];
+        const cards = (CARDS[t.id] || []).map((c, i) => {
+          const card = state.cards[t.id + '#' + i];
+          return card ? { i, ef: +card.ef.toFixed(2), interval: card.interval, reps: card.reps, due: card.due, lapses: card.lapses } : null;
+        }).filter(Boolean);
+        return { id: t.id, name: t.name, level: t.level, mastery: st ? +(st.mastery * 100).toFixed(1) : 0, attempts: st ? st.attempts : 0, locked: !isUnlocked(t), cards };
+      })
+    })),
+    recentSessions: state.sessions.slice(-20),
+    unlocks: state.unlocks,
+    notes: state.notes
+  };
+  document.getElementById('snapOut').value = JSON.stringify(snap, null, 2);
+  toast('Snapshot generado');
+}
+function copySnapshot(){
+  const ta = document.getElementById('snapOut');
+  if (!ta.value) genSnapshot();
+  ta.select();
+  try { document.execCommand('copy'); toast('Copiado'); }
+  catch(e) { navigator.clipboard.writeText(ta.value).then(()=>toast('Copiado')); }
+}
+function downloadSnapshot(){
+  if (!document.getElementById('snapOut').value) genSnapshot();
+  const blob = new Blob([document.getElementById('snapOut').value], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pau25-snapshot-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function injectInstructions(){
+  const txt = document.getElementById('injIn').value.trim();
+  if (!txt) { logSync('Pega un JSON primero', 'err'); return; }
+  let inst;
+  try { inst = JSON.parse(txt); } catch(e){ logSync('JSON inválido: ' + e.message, 'err'); return; }
+  let applied = 0;
+  if (Array.isArray(inst.unlock)) inst.unlock.forEach(id => { if (!state.unlocks.includes(id)) { state.unlocks.push(id); applied++; logSync(`🔓 Desbloqueado: ${id}`, 'ok'); }});
+  if (Array.isArray(inst.lock)) inst.lock.forEach(id => { if (!state.locks.includes(id)) { state.locks.push(id); applied++; logSync(`🔒 Bloqueado: ${id}`, 'ok'); }});
+  if (inst.priority && typeof inst.priority === 'object') Object.keys(inst.priority).forEach(tid => { getTopic(tid).priority = inst.priority[tid]; applied++; logSync(`⚡ Prioridad ${inst.priority[tid]}: ${tid}`, 'ok'); });
+  if (Array.isArray(inst.resetMastery)) inst.resetMastery.forEach(tid => { if (state.topics[tid]) { state.topics[tid] = { mastery: 0, attempts: 0, correct: 0, status:'available', priority:'normal', lastSeen: 0 }; applied++; logSync(`↺ Reset: ${tid}`, 'info'); }});
+  if (Array.isArray(inst.boost)) inst.boost.forEach(cid => { if (state.cards[cid]) { state.cards[cid].due = Date.now(); applied++; logSync(`⏩ Adelantada: ${cid}`, 'info'); }});
+  if (inst.setExamDate) { state.examDate = inst.setExamDate; applied++; logSync(`📅 Examen → ${inst.setExamDate}`, 'ok'); }
+  if (inst.note) { state.notes.push({ ts: Date.now(), text: inst.note }); applied++; logSync(`📌 Nota guardada`, 'ok'); }
+  if (inst.load) { state = Object.assign(defaultState(), inst.load); applied++; logSync(`💾 Estado restaurado`, 'ok'); }
+  if (applied === 0) { logSync('Ninguna clave reconocida.', 'err'); return; }
+  save();
+  renderNotes();
+  document.getElementById('injIn').value = '';
+  toast(`${applied} instrucción${applied===1?'':'es'} aplicada${applied===1?'':'s'}`);
+  updateDays();
+  if (currentPage === 'hoy') renderToday();
+  if (currentPage === 'dashboard') renderDashboard();
+}
+function logSync(msg, type){
+  const log = document.getElementById('syncLog');
+  const ln = document.createElement('div');
+  ln.className = 'ln ' + type;
+  ln.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  log.prepend(ln);
+}
+function renderNotes(){
+  const area = document.getElementById('notesArea');
+  if (state.notes.length === 0) { area.innerHTML = '— Sin notas todavía.'; }
+  else area.innerHTML = state.notes.slice().reverse().map(n => `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-size:11px;color:var(--dim)">${new Date(n.ts).toLocaleString()}</div>${n.text}</div>`).join('');
+}
+function exportFile(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pau25-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function importSnapshotFile(event){
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Heurística: si trae claves de estado completo → restaurar; si trae el formato de snapshot → reconstruir
+      if (data.cards && data.topics && data.streak){
+        // Backup completo (export con exportFile)
+        if (!confirm(`Restaurar progreso completo del archivo "${file.name}"?\nEsto sustituirá tu estado actual.`)) { event.target.value=''; return; }
+        state = Object.assign(defaultState(), data);
+        save();
+        logSync(`💾 Backup completo restaurado desde ${file.name}`, 'ok');
+      } else if (data.subjects && data.metrics){
+        // Snapshot (formato de genSnapshot): reconstruir cards/topics
+        if (!confirm(`Cargar snapshot "${file.name}"?\nEsto sustituirá tu progreso actual.`)) { event.target.value=''; return; }
+        const fresh = defaultState();
+        fresh.examDate = data.examDate || fresh.examDate;
+        fresh.unlocks = data.unlocks || [];
+        fresh.notes = data.notes || [];
+        if (data.streak) fresh.streak = { days: data.streak, last: new Date().toDateString() };
+        (data.subjects || []).forEach(s => {
+          (s.topics || []).forEach(t => {
+            fresh.topics[t.id] = { mastery: (t.mastery || 0) / 100, attempts: t.attempts || 0, correct: Math.round((t.attempts || 0) * (t.mastery || 0) / 100), status:'available', priority:'normal', lastSeen: Date.now() };
+            (t.cards || []).forEach(c => {
+              fresh.cards[t.id + '#' + c.i] = { ef: c.ef || 2.5, interval: c.interval || 0, reps: c.reps || 0, due: c.due || Date.now(), lastQ: null, lapses: c.lapses || 0, times: [] };
+            });
+          });
+        });
+        state = fresh;
+        save();
+        logSync(`📥 Snapshot cargado desde ${file.name}`, 'ok');
+      } else {
+        logSync(`Formato no reconocido en ${file.name}`, 'err');
+        event.target.value='';
+        return;
+      }
+      toast('Estado restaurado · recargando…');
+      setTimeout(()=>location.reload(), 1200);
+    } catch (err) {
+      logSync(`Error leyendo ${file.name}: ${err.message}`, 'err');
+      toast('Archivo no válido', true);
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+function resetAll(){
+  if (confirm('¿Borrar TODO el progreso? No se puede deshacer.')) {
+    localStorage.removeItem(STORE);
+    state = defaultState();
+    save(); location.reload();
+  }
+}
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ============================================================ INIT ============================================================ */
+function updateDays(){
+  const exam = new Date(state.examDate);
+  const days = Math.ceil((exam - new Date()) / DAY);
+  document.getElementById('daysLeft').textContent = days > 0 ? `${days} días hasta el examen` : 'Examen pasado';
+}
+renderNav();
+updateDays();
+goto(location.hash.slice(1) || 'hoy');
+renderDashboard();
+renderToday();
+renderExamList();
+</script>
+</body>
+</html>
