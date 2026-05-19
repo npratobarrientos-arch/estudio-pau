@@ -1,0 +1,3 @@
+# Gmail Cleanup Agent - Log de Acciones
+# Formato: [TIMESTAMP] ACCIÓN=X | DE=sender | ASUNTO=subject | extra
+# Acciones posibles: MOVIDO_A_PAPELERA | CANCELADO | ERROR | RESUMEN | INICIO
