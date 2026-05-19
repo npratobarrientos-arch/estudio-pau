@@ -1,3 +1,14 @@
 # Gmail Cleanup Agent - Log de Acciones
 # Formato: [TIMESTAMP] ACCIÓN=X | DE=sender | ASUNTO=subject | extra
 # Acciones posibles: MOVIDO_A_PAPELERA | CANCELADO | ERROR | RESUMEN | INICIO
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=ofertas@amazon.es | ASUNTO=Ofertas del día — hasta 70% off en tecnología | ID=msg_001 | Razón=Newsletter con List-Unsubscribe, sin abrir 95 días
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=newsletter@elcorteingles.es | ASUNTO=Newsletter — Rebajas de enero | ID=msg_002 | Razón=Newsletter con List-Unsubscribe, sin abrir 78 días
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=newsletter@elcorteingles.es | ASUNTO=Newsletter — Colección primavera | ID=msg_003 | Razón=Newsletter con List-Unsubscribe, sin abrir 62 días
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=promo@zara.com | ASUNTO=Sale — Nueva colección disponible | ID=msg_004 | Razón=Newsletter con List-Unsubscribe, sin abrir 110 días
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=notification@facebookmail.com | ASUNTO=Tienes 3 nuevas notificaciones | ID=msg_005 | Razón=Notificación automática de red social
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=notification@facebookmail.com | ASUNTO=María comentó en tu publicación | ID=msg_006 | Razón=Notificación automática de red social
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=noreply@linkedin.com | ASUNTO=Tienes 5 nuevas visitas a tu perfil | ID=msg_007 | Razón=Notificación automática de red social
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=noreply@linkedin.com | ASUNTO=Juan García te envió una invitación | ID=msg_008 | Razón=Notificación automática de red social
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=no-reply@medium.com | ASUNTO=Tu resumen semanal de Medium | ID=msg_009 | Razón=Newsletter con List-Unsubscribe, sin abrir 85 días
+[2026-05-19 14:11:04] ACCIÓN=MOVIDO_A_PAPELERA (DEMO) | DE=noreply@duolingo.com | ASUNTO=¡Llevas 3 días sin practicar! | ID=msg_010 | Razón=Newsletter con List-Unsubscribe, sin abrir 70 días
+[2026-05-19 14:11:04] ACCIÓN=RESUMEN (DEMO) | DE=N/A | ASUNTO=N/A | Movidos=10 | Revisar=2 | Protegidos=4
