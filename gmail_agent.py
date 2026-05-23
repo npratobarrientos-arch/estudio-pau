@@ -24,11 +24,13 @@ import anthropic
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+import gmail_config as cfg
+
 LOG_FILE = Path("gmail_cleanup_log.txt")
-BATCH_SIZE = 100
+BATCH_SIZE = cfg.BATCH_SIZE
 MODEL = "claude-opus-4-7"
 
-SYSTEM_PROMPT = """Eres un asistente especializado en limpieza segura de Gmail. Tu idioma es el español.
+_SYSTEM_PROMPT_TEMPLATE = """Eres un asistente especializado en limpieza segura de Gmail. Tu idioma es el español.
 
 FLUJO OBLIGATORIO (nunca lo saltees):
 1. ANALIZAR — escanear inbox y carpetas con las herramientas disponibles
@@ -40,7 +42,7 @@ FLUJO OBLIGATORIO (nunca lo saltees):
 REGLAS CRÍTICAS:
 - NUNCA borres permanentemente. Solo mueves a la papelera (trash).
 - Si hay duda sobre clasificación, siempre escala al nivel más cauteloso.
-- Trabaja en lotes de máximo 100 correos por llamada de herramienta.
+- Trabaja en lotes de máximo {batch_size} correos por llamada de herramienta.
 - Explica claramente POR QUÉ propones mover cada grupo.
 
 CATEGORÍAS DE CLASIFICACIÓN:
@@ -51,6 +53,7 @@ CATEGORÍAS DE CLASIFICACIÓN:
 - Notificaciones automáticas de redes sociales (Facebook, Instagram, LinkedIn, Twitter/X)
 - Emails de "no-reply" sin adjuntos y sin respuesta del usuario
 - Asunto con: oferta, descuento, % off, sale, unsubscribe, newsletter
+- Remitentes en lista SAFE_TO_TRASH del usuario (ver abajo)
 
 🟡 REQUIEREN REVISIÓN ANTES DE PROPONER:
 - Cualquier correo con adjuntos (PDF, DOC, DOCX, JPG, PNG, ZIP)
@@ -59,11 +62,26 @@ CATEGORÍAS DE CLASIFICACIÓN:
   reserva, confirmación, comprobante, curriculum, CV
 
 🔴 NUNCA TOCAR SIN PERMISO EXPLÍCITO:
+- Remitentes en lista ALWAYS_PROTECT del usuario (ver abajo) — PRIORIDAD MÁXIMA
+- Asunto contiene palabras clave protegidas del usuario (ver abajo)
 - Correos donde el usuario respondió (hilos con mensajes salientes)
-- Remitentes guardados en Contactos
 - Correos no leídos de menos de 30 días
 - Emails con etiquetas manuales del usuario
 - Correos marcados con estrella
+
+CONFIGURACIÓN PERSONALIZADA DEL USUARIO:
+
+🟢 REMITENTES SEGUROS (borrar sin pedir aprobación adicional):
+{safe_list}
+
+🔴 REMITENTES SIEMPRE PROTEGIDOS (nunca tocar, prioridad absoluta):
+{protect_list}
+
+🔴 PALABRAS EN ASUNTO QUE SIEMPRE PROTEGEN (aunque el remitente sea seguro):
+{protect_keywords}
+
+QUERIES DE ESCANEO (usa estas búsquedas en este orden):
+{scan_queries}
 
 FORMATO DEL REPORTE (usa exactamente esta estructura):
 
@@ -71,36 +89,78 @@ FORMATO DEL REPORTE (usa exactamente esta estructura):
 📊 REPORTE DE ANÁLISIS - LIMPIEZA GMAIL
 ═══════════════════════════════════════
 
-📁 Carpetas analizadas: INBOX, Promotions, Social, Updates, Spam
+📁 Queries ejecutadas: {scan_labels}
 📧 Total de correos revisados: N
 💾 Espacio estimado a liberar: X MB
 
 ────────────────────────────────────────
 🟢 CANDIDATOS A PAPELERA — N correos (~X MB)
 ────────────────────────────────────────
-Grupo 1: Newsletters (N correos)
-  • remitente@ejemplo.com — último: hace 3 meses
-  • Razón: Newsletter con List-Unsubscribe, sin abrir 90+ días
-
-Grupo 2: Redes sociales (N correos)
-  • notifications@facebook.com — N correos acumulados
-  • Razón: Notificaciones automáticas sin interacción
+Grupo 1: [nombre del grupo] (N correos)
+  • remitente@ejemplo.com — último: hace X días
+  • Razón: [explicación clara]
 
 ────────────────────────────────────────
 🟡 REQUIEREN TU REVISIÓN — N correos
 ────────────────────────────────────────
-  • banco@hsbc.com — "Estado de cuenta febrero" — adjunto PDF
-  • soporte@universidad.edu — "Constancia de estudios" — adjunto PDF
+  • remitente — "asunto" — motivo
 
 ────────────────────────────────────────
 🔴 PROTEGIDOS — NO SE TOCARÁN — N correos
 ────────────────────────────────────────
-  • N correos con estrella
-  • N correos no leídos recientes (<30 días)
-  • N hilos con respuestas del usuario
+  • N correos con estrella / N en lista protegida / etc.
 
 Al terminar el reporte, di exactamente: "REPORTE_COMPLETO" en una línea separada.
 Esto le indica al sistema que puede continuar con el proceso de aprobación."""
+
+
+def _build_system_prompt() -> str:
+    """Construye el system prompt con la configuración personalizada del usuario."""
+    safe_list = "\n".join(f"  - {s}" for s in cfg.SAFE_TO_TRASH)
+    protect_list = "\n".join(f"  - {p}" for p in cfg.ALWAYS_PROTECT)
+    protect_keywords = "\n".join(f"  - {k}" for k in cfg.PROTECT_SUBJECT_KEYWORDS)
+    scan_queries = "\n".join(
+        f"  {i+1}. {q['label']}: {q['query']} — {q['description']}"
+        for i, q in enumerate(cfg.SCAN_QUERIES)
+    )
+    scan_labels = ", ".join(q["label"] for q in cfg.SCAN_QUERIES)
+    return _SYSTEM_PROMPT_TEMPLATE.format(
+        batch_size=cfg.BATCH_SIZE,
+        safe_list=safe_list,
+        protect_list=protect_list,
+        protect_keywords=protect_keywords,
+        scan_queries=scan_queries,
+        scan_labels=scan_labels,
+    )
+
+
+def classify_with_user_config(email: dict) -> tuple[str, str] | None:
+    """
+    Primera capa de clasificación usando listas personalizadas del usuario.
+    Devuelve (categoría, razón) si el email coincide, o None para continuar
+    con la clasificación genérica.
+
+    Prioridad: ALWAYS_PROTECT > PROTECT_SUBJECT_KEYWORDS > SAFE_TO_TRASH
+    """
+    subject = (email.get("subject") or "").lower()
+    sender = (email.get("from") or email.get("sender") or "").lower()
+
+    # 🔴 Protección absoluta — lista del usuario
+    for protected in cfg.ALWAYS_PROTECT:
+        if protected.lower() in sender:
+            return "ROJO", f"En lista protegida del usuario: {protected}"
+
+    # 🔴 Palabras clave protegidas en asunto — aunque el remitente sea seguro
+    for kw in cfg.PROTECT_SUBJECT_KEYWORDS:
+        if kw.lower() in subject:
+            return "ROJO", f"Asunto contiene término protegido: «{kw}»"
+
+    # 🟢 Remitentes seguros — lista del usuario
+    for safe in cfg.SAFE_TO_TRASH:
+        if safe.lower() in sender:
+            return "VERDE", f"Remitente en lista segura del usuario: {safe}"
+
+    return None  # Continuar con clasificación genérica
 
 
 def log_action(action: str, sender: str, subject: str, extra: str = "") -> None:
@@ -113,7 +173,13 @@ def log_action(action: str, sender: str, subject: str, extra: str = "") -> None:
 
 
 def classify_email(email: dict) -> tuple[str, str]:
-    """Clasificación local de seguridad como capa extra sobre el análisis de Claude."""
+    """Clasificación local: primero listas personalizadas, luego reglas genéricas."""
+    # Capa 1: lista personalizada del usuario (mayor prioridad)
+    user_result = classify_with_user_config(email)
+    if user_result is not None:
+        return user_result
+
+    # Capa 2: reglas genéricas de seguridad
     subject = (email.get("subject") or "").lower()
     sender = (email.get("from") or email.get("sender") or "").lower()
     has_attachments = bool(email.get("has_attachments") or email.get("attachments"))
@@ -211,20 +277,24 @@ async def _run_analysis_phase(
     Fase 1: Claude analiza y clasifica todos los correos.
     Devuelve la lista de emails clasificados como VERDE disponibles para aprobación.
     """
+    queries_str = "\n".join(
+        f"  {i+1}. {q['label']}: {q['query']}"
+        for i, q in enumerate(cfg.SCAN_QUERIES)
+    )
     messages: list[dict] = [
         {
             "role": "user",
             "content": (
-                f"Analiza mi Gmail completo. Carpetas a revisar: "
-                "INBOX, Promotions, Social, Updates, Spam. "
-                f"Trabaja en lotes de {BATCH_SIZE} correos por consulta. "
+                f"Analiza mi Gmail ejecutando estas búsquedas en este orden:\n{queries_str}\n\n"
+                f"Trabaja en lotes de {BATCH_SIZE} correos por búsqueda. "
                 "Para cada correo identifica: remitente (from), asunto (subject), "
                 "fecha, días desde envío, si tiene adjuntos, si tiene cabecera "
                 "List-Unsubscribe, si fue respondido por mí, si está marcado "
                 "con estrella, y sus etiquetas. "
-                "Clasifica según las categorías 🟢/🟡/🔴 del sistema prompt. "
-                "Genera el reporte completo con los grupos y tamaño estimado. "
-                "Sé exhaustivo — escanea todas las páginas disponibles."
+                "Muestra el recuento de correos encontrados por query ANTES de clasificar. "
+                "Luego clasifica según las categorías 🟢/🟡/🔴 del sistema prompt, "
+                "aplicando primero las listas personalizadas del usuario. "
+                "Genera el reporte completo con los grupos y tamaño estimado."
             ),
         }
     ]
@@ -236,7 +306,7 @@ async def _run_analysis_phase(
         response = client.messages.create(
             model=MODEL,
             max_tokens=8192,
-            system=SYSTEM_PROMPT,
+            system=_build_system_prompt(),
             tools=tools_anthropic,
             messages=messages,
         )
@@ -346,7 +416,7 @@ async def _run_execution_phase(
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=4096,
-                system=SYSTEM_PROMPT,
+                system=_build_system_prompt(),
                 tools=tools_anthropic,
                 messages=messages,
             )

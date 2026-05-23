@@ -9,6 +9,8 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+import gmail_config as cfg
+
 LOG_FILE = Path("gmail_cleanup_log.txt")
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ FAKE_INBOX = [
     {"id": "msg_013", "from": "secretaria@universidad.es", "subject": "Constancia de matrícula adjunta",
      "days_old": 200, "is_read": True, "is_starred": False, "has_attachments": True,
      "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
-    # 🔴 Protegidos
+    # 🔴 Protegidos — genéricos
     {"id": "msg_014", "from": "mama@gmail.com", "subject": "Cena del domingo — confirmas?",
      "days_old": 5, "is_read": False, "is_starred": True, "has_attachments": False,
      "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
@@ -68,12 +70,64 @@ FAKE_INBOX = [
     {"id": "msg_016", "from": "banco@bbva.es", "subject": "Movimiento en tu cuenta",
      "days_old": 2, "is_read": False, "is_starred": False, "has_attachments": False,
      "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
+
+    # 🟢 De la lista SAFE_TO_TRASH del usuario
+    {"id": "msg_017", "from": "ofertas@groupon.es", "subject": "50% off en restaurantes hoy",
+     "days_old": 20, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+    {"id": "msg_018", "from": "deals@skyscanner.net", "subject": "Vuelos baratos desde Madrid",
+     "days_old": 15, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+    {"id": "msg_019", "from": "noreply@ryanair.com", "subject": "¡Ofertas de vuelos esta semana!",
+     "days_old": 10, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+    {"id": "msg_020", "from": "newsletter@getyourguide.com", "subject": "Actividades recomendadas en Barcelona",
+     "days_old": 25, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+    {"id": "msg_021", "from": "promo@bolt.eu", "subject": "5€ de descuento en tu próximo viaje",
+     "days_old": 18, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+    {"id": "msg_022", "from": "news@instantgaming.com", "subject": "Juegos en oferta esta semana",
+     "days_old": 30, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": True, "user_replied": False, "labels": ["CATEGORY_PROMOTIONS"]},
+
+    # 🔴 De la lista ALWAYS_PROTECT del usuario
+    {"id": "msg_023", "from": "noreply@ticketmaster.es", "subject": "Tu entrada para el concierto",
+     "days_old": 5, "is_read": True, "is_starred": False, "has_attachments": True,
+     "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
+    {"id": "msg_024", "from": "service@paypal.es", "subject": "Has recibido un pago de 50€",
+     "days_old": 3, "is_read": True, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
+    {"id": "msg_025", "from": "info@agenciatributaria.gob.es", "subject": "Declaración de la Renta 2025",
+     "days_old": 8, "is_read": False, "is_starred": False, "has_attachments": False,
+     "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
+    {"id": "msg_026", "from": "soporte@revolut.com", "subject": "Tu extracto de abril",
+     "days_old": 22, "is_read": True, "is_starred": False, "has_attachments": True,
+     "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
+
+    # 🔴 Ryanair con confirmación de vuelo (keyword protegida en asunto)
+    {"id": "msg_027", "from": "noreply@ryanair.com", "subject": "Confirmación de reserva FR1234",
+     "days_old": 3, "is_read": True, "is_starred": False, "has_attachments": True,
+     "list_unsubscribe": False, "user_replied": False, "labels": ["INBOX"]},
 ]
 
 
 def classify_email(email: dict) -> tuple[str, str]:
     subject = (email.get("subject") or "").lower()
     sender = (email.get("from") or "").lower()
+
+    # Capa 1: listas personalizadas del usuario (mayor prioridad)
+    for protected in cfg.ALWAYS_PROTECT:
+        if protected.lower() in sender:
+            return "ROJO", f"Lista protegida del usuario: {protected}"
+    for kw in cfg.PROTECT_SUBJECT_KEYWORDS:
+        if kw.lower() in subject:
+            return "ROJO", f"Asunto contiene término protegido: «{kw}»"
+    for safe in cfg.SAFE_TO_TRASH:
+        if safe.lower() in sender:
+            return "VERDE", f"Lista segura del usuario: {safe}"
+
+    # Capa 2: reglas genéricas
     has_attachments = bool(email.get("has_attachments"))
     has_list_unsub = bool(email.get("list_unsubscribe"))
     is_read = email.get("is_read", True)
